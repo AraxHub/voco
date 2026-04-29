@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: voco-frontend
+  namespace: voco
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: voco-frontend
+  template:
+    metadata:
+      labels:
+        app: voco-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: voco-frontend:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: voco-backend-env
+  namespace: voco
+data:
+  VOCO_DEV_MODE: "true"
+
+  # Returned to the browser; must be reachable from host.
+  VOCO_LIVEKIT_URL: "ws://localhost:7880"
+
+  # Used by backend to generate joinUrl.
+  VOCO_SERVER_BASE_URL: "http://localhost"
+

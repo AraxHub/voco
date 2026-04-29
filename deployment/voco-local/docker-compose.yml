@@ -1,0 +1,43 @@
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    command: ["--config", "/etc/livekit.yaml"]
+    restart: unless-stopped
+    ports:
+      - "7880:7880" # HTTP + WebSocket signalling
+      - "7881:7881" # TURN/TLS (optional, can be unused in MVP)
+      - "62000-62200:62000-62200/udp" # WebRTC media (dev range)
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+
+  voco-backend:
+    build:
+      context: ../..
+      dockerfile: deployment/voco-local/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      # This value is returned to the browser, so it must be reachable from host.
+      - VOCO_LIVEKIT_URL=ws://localhost:7880
+    depends_on:
+      - livekit
+    ports:
+      - "8080:8080"
+
+  voco-frontend:
+    image: node:22-alpine
+    working_dir: /app
+    restart: unless-stopped
+    depends_on:
+      - voco-backend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+    environment:
+      # Frontend calls backend via Vite proxy (/api -> voco-backend:8080)
+      - VITE_API_BASE_URL=
+      - VITE_PROXY_TARGET=http://voco-backend:8080
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"

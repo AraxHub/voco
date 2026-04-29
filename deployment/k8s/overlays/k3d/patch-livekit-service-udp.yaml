@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit-svc
+  namespace: voco
+spec:
+  ports:
+    - name: rtc-udp-62000
+      port: 62000
+      targetPort: 62000
+      protocol: UDP
+    - name: rtc-udp-62001
+      port: 62001
+      targetPort: 62001
+      protocol: UDP
+    - name: rtc-udp-62002
+      port: 62002
+      targetPort: 62002
+      protocol: UDP
+    - name: rtc-udp-62003
+      port: 62003
+      targetPort: 62003
+      protocol: UDP
+    - name: rtc-udp-62004
+      port: 62004
+      targetPort: 62004
+      protocol: UDP
+    - name: rtc-udp-62005
+      port: 62005
+      targetPort: 62005
+      protocol: UDP
+    - name: rtc-udp-62006
+      port: 62006
+      targetPort: 62006
+      protocol: UDP
+    - name: rtc-udp-62007
+      port: 62007
+      targetPort: 62007
+      protocol: UDP
+    - name: rtc-udp-62008
+      port: 62008
+      targetPort: 62008
+      protocol: UDP
+    - name: rtc-udp-62009
+      port: 62009
+      targetPort: 62009
+      protocol: UDP
+    - name: rtc-udp-62010
+      port: 62010
+      targetPort: 62010
+      protocol: UDP
+    - name: rtc-udp-62011
+      port: 62011
+      targetPort: 62011
+      protocol: UDP
+    - name: rtc-udp-62012
+      port: 62012
+      targetPort: 62012
+      protocol: UDP
+    - name: rtc-udp-62013
+      port: 62013
+      targetPort: 62013
+      protocol: UDP
+    - name: rtc-udp-62014
+      port: 62014
+      targetPort: 62014
+      protocol: UDP
+    - name: rtc-udp-62015
+      port: 62015
+      targetPort: 62015
+      protocol: UDP
+    - name: rtc-udp-62016
+      port: 62016
+      targetPort: 62016
+      protocol: UDP
+    - name: rtc-udp-62017
+      port: 62017
+      targetPort: 62017
+      protocol: UDP
+    - name: rtc-udp-62018
+      port: 62018
+      targetPort: 62018
+      protocol: UDP
+    - name: rtc-udp-62019
+      port: 62019
+      targetPort: 62019
+      protocol: UDP
+    - name: rtc-udp-62020
+      port: 62020
+      targetPort: 62020
+      protocol: UDP
+

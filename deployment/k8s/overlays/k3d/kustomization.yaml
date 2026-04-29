@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: voco
+
+resources:
+  - base/namespace.yaml
+  - base/frontend/deployment.yaml
+  - base/frontend/service.yaml
+  - base/backend/deployment.yaml
+  - base/backend/service.yaml
+  - base/livekit/deployment.yaml
+  - base/livekit/service.yaml
+  - base/ingress.yaml
+  - backend-configmap.yaml
+  - voco-secrets.yaml
+  - livekit-configmap.yaml
+
+patches:
+  - path: patch-livekit-service-lb.yaml
+  - path: patch-backend-env.yaml
+  - path: patch-livekit-service-udp.yaml
+

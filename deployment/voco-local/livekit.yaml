@@ -1,0 +1,14 @@
+port: 7880
+
+logging:
+  level: info
+
+rtc:
+  udp_port: 61000
+  tcp_port: 7881
+  port_range_start: 61000
+  port_range_end: 61200
+
+keys:
+  devkey: devsecret
+

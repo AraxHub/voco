@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit-svc
+  namespace: voco
+spec:
+  ports:
+    - name: rtc-udp-62000
+      port: 62000
+      targetPort: 62000
+      protocol: UDP
+      nodePort: 62000
+    - name: rtc-udp-62001
+      port: 62001
+      targetPort: 62001
+      protocol: UDP
+      nodePort: 62001
+    - name: rtc-udp-62002
+      port: 62002
+      targetPort: 62002
+      protocol: UDP
+      nodePort: 62002
+    - name: rtc-udp-62003
+      port: 62003
+      targetPort: 62003
+      protocol: UDP
+      nodePort: 62003
+    - name: rtc-udp-62004
+      port: 62004
+      targetPort: 62004
+      protocol: UDP
+      nodePort: 62004
+    - name: rtc-udp-62005
+      port: 62005
+      targetPort: 62005
+      protocol: UDP
+      nodePort: 62005
+    - name: rtc-udp-62006
+      port: 62006
+      targetPort: 62006
+      protocol: UDP
+      nodePort: 62006
+    - name: rtc-udp-62007
+      port: 62007
+      targetPort: 62007
+      protocol: UDP
+      nodePort: 62007
+    - name: rtc-udp-62008
+      port: 62008
+      targetPort: 62008
+      protocol: UDP
+      nodePort: 62008
+    - name: rtc-udp-62009
+      port: 62009
+      targetPort: 62009
+      protocol: UDP
+      nodePort: 62009
+    - name: rtc-udp-62010
+      port: 62010
+      targetPort: 62010
+      protocol: UDP
+      nodePort: 62010
+    - name: rtc-udp-62011
+      port: 62011
+      targetPort: 62011
+      protocol: UDP
+      nodePort: 62011
+    - name: rtc-udp-62012
+      port: 62012
+      targetPort: 62012
+      protocol: UDP
+      nodePort: 62012
+    - name: rtc-udp-62013
+      port: 62013
+      targetPort: 62013
+      protocol: UDP
+      nodePort: 62013
+    - name: rtc-udp-62014
+      port: 62014
+      targetPort: 62014
+      protocol: UDP
+      nodePort: 62014
+    - name: rtc-udp-62015
+      port: 62015
+      targetPort: 62015
+      protocol: UDP
+      nodePort: 62015
+    - name: rtc-udp-62016
+      port: 62016
+      targetPort: 62016
+      protocol: UDP
+      nodePort: 62016
+    - name: rtc-udp-62017
+      port: 62017
+      targetPort: 62017
+      protocol: UDP
+      nodePort: 62017
+    - name: rtc-udp-62018
+      port: 62018
+      targetPort: 62018
+      protocol: UDP
+      nodePort: 62018
+    - name: rtc-udp-62019
+      port: 62019
+      targetPort: 62019
+      protocol: UDP
+      nodePort: 62019
+    - name: rtc-udp-62020
+      port: 62020
+      targetPort: 62020
+      protocol: UDP
+      nodePort: 62020

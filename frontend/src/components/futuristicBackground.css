@@ -1,0 +1,122 @@
+.fxBg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(1200px 700px at 20% 10%, rgba(155, 81, 224, 0.22), transparent 60%),
+    radial-gradient(900px 700px at 80% 20%, rgba(31, 140, 249, 0.18), transparent 55%),
+    radial-gradient(800px 600px at 55% 85%, rgba(120, 80, 255, 0.18), transparent 60%),
+    linear-gradient(180deg, #0b0b12 0%, #070715 40%, #060615 100%);
+}
+
+.fxBg__base {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(1200px 900px at 50% 40%, rgba(255, 255, 255, 0.06), transparent 60%);
+  filter: blur(0.2px);
+}
+
+.fxBg__ribbon {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 1400px;
+  height: 520px;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  border-radius: 9999px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(88, 24, 124, 0) 0%,
+      rgba(164, 77, 255, 0.30) 18%,
+      rgba(31, 140, 249, 0.32) 48%,
+      rgba(164, 77, 255, 0.28) 78%,
+      rgba(88, 24, 124, 0) 100%
+    );
+  filter: blur(26px);
+  opacity: 0.9;
+  mix-blend-mode: screen;
+  animation: fxRibbon 18s ease-in-out infinite;
+}
+
+@keyframes fxRibbon {
+  0% {
+    transform: translate(-50%, -50%) rotate(-14deg) translateY(0px) scaleX(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(-9deg) translateY(-16px) scaleX(1.06);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(-14deg) translateY(0px) scaleX(1);
+  }
+}
+
+.fxBg__glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.35;
+  mix-blend-mode: screen;
+}
+
+.fxBg__glow--a {
+  left: -120px;
+  top: 30%;
+  background: radial-gradient(circle at 30% 30%, rgba(164, 77, 255, 0.9), rgba(164, 77, 255, 0));
+  animation: fxGlowA 14s ease-in-out infinite;
+}
+
+.fxBg__glow--b {
+  right: -140px;
+  top: 15%;
+  background: radial-gradient(circle at 30% 30%, rgba(31, 140, 249, 0.9), rgba(31, 140, 249, 0));
+  animation: fxGlowB 16s ease-in-out infinite;
+}
+
+@keyframes fxGlowA {
+  0% {
+    transform: translateY(-10px);
+  }
+  50% {
+    transform: translateY(16px);
+  }
+  100% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fxGlowB {
+  0% {
+    transform: translateY(12px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+  100% {
+    transform: translateY(12px);
+  }
+}
+
+.fxBg__noise {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 100%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 100%),
+    radial-gradient(circle at 40% 85%, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 100%);
+  background-size: 140px 140px, 180px 180px, 220px 220px;
+  opacity: 0.12;
+  mix-blend-mode: overlay;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fxBg__ribbon,
+  .fxBg__glow--a,
+  .fxBg__glow--b {
+    animation: none;
+  }
+}
+

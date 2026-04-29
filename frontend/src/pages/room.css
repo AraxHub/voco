@@ -1,0 +1,161 @@
+.roomPage {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.linkBtn {
+  background: rgba(10, 10, 18, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  padding: 16px 18px;
+  border-radius: 14px;
+  font-size: 16px;
+  box-shadow: rgba(0, 0, 0, 0.55) 0 18px 30px -22px;
+  backdrop-filter: blur(12px);
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.linkBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+  box-shadow: rgba(0, 0, 0, 0.62) 0 22px 40px -26px;
+}
+
+.roomJoin {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: 18px 18px 28px;
+}
+
+.roomJoin__top {
+  width: min(980px, 92vw);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.roomJoin__stack {
+  width: min(640px, 92vw);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roomJoin__name {
+  padding: 18px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 22px;
+}
+
+.btn3d {
+  width: 100%;
+  padding: 20px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 20px;
+  letter-spacing: 0.2px;
+  background:
+    linear-gradient(180deg, rgba(164, 77, 255, 0.38), rgba(31, 140, 249, 0.16));
+  box-shadow:
+    rgba(0, 0, 0, 0.55) 0 22px 45px -25px,
+    rgba(255, 255, 255, 0.12) 0 1px 0 inset;
+  transform: translateY(0);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.btn3d:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    rgba(0, 0, 0, 0.62) 0 28px 60px -30px,
+    rgba(255, 255, 255, 0.12) 0 1px 0 inset;
+}
+
+.btn3d:active {
+  transform: translateY(1px);
+}
+
+.btn3d:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: translateY(0);
+}
+
+.errorBox {
+  margin-top: 12px;
+  border: 1px solid #ff4d4f55;
+  background: #ff4d4f11;
+  color: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.roomPage__error {
+  padding: 16px;
+  color: var(--text-h);
+}
+
+.roomPage--inCall {
+  height: 100svh;
+}
+
+.roomPage__inCallControls {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(10px);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.roomPage__toggle {
+  user-select: none;
+}
+
+.roomPage__btn {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+/* LiveKit: индикатор говорящего — border у .lk-participant-tile::after
+   (см. @livekit/components-styles, --lk-speaking-indicator-width, data-lk-speaking).
+   Отключаем его глобально (по запросу: "навсегда"). */
+.lk-participant-tile {
+  --lk-speaking-indicator-width: 0;
+}
+.lk-participant-tile::after {
+  border-width: 0 !important;
+}
+
+/* In-call: имя участника снизу слева крупнее */
+.lk-participant-name {
+  font-size: 1.75rem !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.2px;
+}
+

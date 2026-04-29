@@ -1,0 +1,87 @@
+.callBar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(10, 10, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  box-shadow: rgba(0, 0, 0, 0.55) 0 24px 50px -30px;
+}
+
+.callBar__btn {
+  height: 56px;
+  min-width: 56px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.06));
+  box-shadow:
+    rgba(0, 0, 0, 0.45) 0 18px 30px -22px,
+    rgba(255, 255, 255, 0.10) 0 1px 0 inset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease,
+    opacity 140ms ease;
+}
+
+.callBar__btn.is-copied {
+  border-color: rgba(31, 249, 104, 0.45);
+  background: linear-gradient(180deg, rgba(31, 249, 104, 0.25), rgba(31, 140, 249, 0.08));
+}
+
+.callBar__btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    rgba(0, 0, 0, 0.6) 0 22px 40px -26px,
+    rgba(255, 255, 255, 0.11) 0 1px 0 inset;
+}
+
+.callBar__btn:active {
+  transform: translateY(1px);
+}
+
+.callBar__btn[aria-pressed='true'] {
+  border-color: rgba(164, 77, 255, 0.55);
+  background: linear-gradient(180deg, rgba(164, 77, 255, 0.35), rgba(31, 140, 249, 0.12));
+}
+
+.callBar__btn--leave {
+  background: linear-gradient(180deg, rgba(249, 31, 49, 0.45), rgba(249, 31, 49, 0.18));
+  border-color: rgba(249, 31, 49, 0.55);
+}
+
+.callBar__btn--ghost {
+  opacity: 0.9;
+}
+
+@media (max-width: 700px) {
+  .callBar {
+    width: min(520px, calc(100vw - 24px));
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .callBar__btn {
+    padding: 0 10px;
+  }
+
+  .callBar__btn--leave {
+    min-width: 64px;
+  }
+}
+

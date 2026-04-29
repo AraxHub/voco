@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+  namespace: voco
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: livekit
+  template:
+    metadata:
+      labels:
+        app: livekit
+    spec:
+      containers:
+        - name: livekit
+          image: livekit/livekit-server:latest
+          args: ["--config", "/etc/livekit/livekit.yaml"]
+          ports:
+            - name: signaling
+              containerPort: 7880
+              protocol: TCP
+            - name: rtc-tcp
+              containerPort: 7881
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/livekit
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      volumes:
+        - name: config
+          configMap:
+            name: livekit-config
+
