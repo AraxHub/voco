@@ -24,6 +24,7 @@ function IconArrow() {
 export function ChatDrawer({ open, onClose }: Props) {
   const { chatMessages, send, isSending } = useChat()
   const [text, setText] = useState('')
+  const [sendError, setSendError] = useState<string | null>(null)
   const listRef = useRef<HTMLUListElement | null>(null)
 
   const items = useMemo(() => chatMessages.slice(-200), [chatMessages])
@@ -66,8 +67,15 @@ export function ChatDrawer({ open, onClose }: Props) {
           e.preventDefault()
           const msg = text.trim()
           if (!msg) return
+          setSendError(null)
           setText('')
-          await send(msg)
+          try {
+            await send(msg)
+          } catch (err) {
+            const m = err instanceof Error ? err.message : String(err)
+            setSendError(m)
+            console.error('[voco chat] send failed:', err)
+          }
         }}
       >
         <input
@@ -79,6 +87,7 @@ export function ChatDrawer({ open, onClose }: Props) {
         <button className="chatDrawer__send" type="submit" disabled={isSending}>
           Send
         </button>
+        {sendError && <p className="chatDrawer__error">{sendError}</p>}
       </form>
     </aside>
   )

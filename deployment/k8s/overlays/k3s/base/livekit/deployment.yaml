@@ -5,6 +5,10 @@ metadata:
   namespace: voco
 spec:
   replicas: 1
+  # hostNetwork/livekit нужны одиночные процессы на портах; RollingUpdate может поднять
+  # второй под до удаления первого → FailedScheduling «didn't have free ports».
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: livekit

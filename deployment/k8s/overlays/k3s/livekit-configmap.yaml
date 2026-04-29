@@ -16,7 +16,7 @@ data:
       port_range_start: 62000
       port_range_end: 62020
 
-    # Dev defaults. For production rotate keys and keep them out of git:
-    # either patch this ConfigMap on the VPS or switch to mounting a Secret.
+    # keys — имя записи ДО ':' = VOCO_LIVEKIT_API_KEY, значение = VOCO_LIVEKIT_API_SECRET
+    # (должно совпадать с секретом voco-secrets; строка ниже только для локального dev)
     keys:
       devkey: devsecret
