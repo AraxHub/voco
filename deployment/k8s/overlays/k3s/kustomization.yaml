@@ -12,6 +12,7 @@ resources:
   - base/livekit/deployment.yaml
   - base/livekit/service.yaml
   - base/ingress.yaml
+  - ingress-livekit-wss.yaml
   - backend-configmap.yaml
   - livekit-configmap.yaml
 

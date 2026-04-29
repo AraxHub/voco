@@ -6,14 +6,14 @@ metadata:
 data:
   VOCO_DEV_MODE: "false"
 
-  # Returned to the browser; must be reachable from users.
-  VOCO_LIVEKIT_URL: "ws://155.212.190.163:7880"
+  # WSS через ingress (см. ingress-livekit-wss.yaml). DNS: lk → IP VPS.
+  VOCO_LIVEKIT_URL: "wss://lk.voco-online.ru"
 
-  # Used by backend to generate joinUrl.
-  VOCO_SERVER_BASE_URL: "http://155.212.190.163"
+  # Публичный URL API/инвайтов (HTTPS).
+  VOCO_SERVER_BASE_URL: "https://voco-online.ru"
 
-  # CORS: allow your frontend origin.
-  VOCO_SERVER_CORS_ALLOWED_ORIGINS: "http://155.212.190.163"
+  # CORS: фронт на том же домене (+ www при необходимости).
+  VOCO_SERVER_CORS_ALLOWED_ORIGINS: "https://voco-online.ru,https://www.voco-online.ru"
 
   # Logging defaults (override via env if desired)
   VOCO_LOG_FORMAT: "text"
