@@ -47,13 +47,20 @@ func (uc *RoomUsecase) IssueToken(ctx context.Context, roomID domain.RoomID, par
 		name = "guest"
 	}
 
+	canPublish := true
+	canSubscribe := true
+	canPublishData := true
+
 	at := lkauth.NewAccessToken(uc.LiveKitCfg.LiveKitAPIKey, uc.LiveKitCfg.LiveKitAPISecret).
 		SetIdentity(identity).
 		SetName(name).
 		SetValidFor(uc.LiveKitCfg.TokenTTL)
 	at.AddGrant(&lkauth.VideoGrant{
-		RoomJoin: true,
-		Room:     roomID.String(),
+		RoomJoin:       true,
+		Room:           roomID.String(),
+		CanPublish:     &canPublish,
+		CanSubscribe:   &canSubscribe,
+		CanPublishData: &canPublishData,
 	})
 
 	jwt, err := at.ToJWT()
