@@ -1,0 +1,16 @@
+# Применяется один раз на кластер (не в namespace voco).
+# Перед apply замени email на свой — Let's Encrypt шлёт туда уведомления об истечении.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    email: CHANGE_ME@example.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx

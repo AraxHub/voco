@@ -1,0 +1,29 @@
+# Сигналинг LiveKit по WSS (нужен, если сайт открывается по HTTPS — иначе браузер режет ws://).
+# DNS: A-запись lk.<твой-домен> → тот же IP, что и у VPS.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: livekit-wss
+  namespace: voco
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/websocket-services: "livekit-svc"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - lk.voco-online.ru
+      secretName: voco-livekit-tls
+  rules:
+    - host: lk.voco-online.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: livekit-svc
+                port:
+                  number: 7880
