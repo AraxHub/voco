@@ -9,11 +9,12 @@ data:
   # WSS через ingress (см. ingress-livekit-wss.yaml). DNS: lk → IP VPS.
   VOCO_LIVEKIT_URL: "wss://lk.voco-online.ru"
 
-  # Публичный URL API/инвайтов (HTTPS).
-  VOCO_SERVER_BASE_URL: "https://voco-online.ru"
+  # Публичный URL API/инвайтов (HTTPS). Используем www как основной домен
+  # (apex voco-online.ru сейчас имеет кривой AAAA → Let's Encrypt падает).
+  VOCO_SERVER_BASE_URL: "https://www.voco-online.ru"
 
-  # CORS: фронт на том же домене (+ www при необходимости).
-  VOCO_SERVER_CORS_ALLOWED_ORIGINS: "https://voco-online.ru,https://www.voco-online.ru"
+  # CORS: фронт на www.
+  VOCO_SERVER_CORS_ALLOWED_ORIGINS: "https://www.voco-online.ru"
 
   # Logging defaults (override via env if desired)
   VOCO_LOG_FORMAT: "text"

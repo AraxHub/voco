@@ -10,27 +10,9 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - voco-online.ru
         - www.voco-online.ru
       secretName: voco-web-tls
   rules:
-    - host: voco-online.ru
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service:
-                name: voco-backend
-                port:
-                  number: 8080
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: voco-frontend
-                port:
-                  number: 80
     - host: www.voco-online.ru
       http:
         paths:
