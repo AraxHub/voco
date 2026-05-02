@@ -1,0 +1,59 @@
+# сервис Prometheus — ClusterIP, Ingress не создаём.
+
+alertmanager:
+  enabled: false
+
+pushgateway:
+  enabled: false
+
+server:
+  service:
+    type: ClusterIP
+  retention: 7d
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
+  # Доп. скрейп-джобы без ServiceMonitor/оператора:
+  #
+  # 1) ingress-nginx:
+  #    стараемся найти service endpoints в namespace ingress-nginx с портом, который называется "metrics"
+  #    или "prometheus". Если у тебя ingress-nginx собран иначе — подправишь selectors.
+  #
+  # 2) livekit:
+  #    скрейпим сервис livekit-svc:7880 по пути /metrics (если endpoint включён).
+  extraScrapeConfigs: |
+    - job_name: "ingress-nginx"
+      kubernetes_sd_configs:
+        - role: endpoints
+      relabel_configs:
+        - action: keep
+          source_labels: [__meta_kubernetes_namespace]
+          regex: ingress-nginx
+        - action: keep
+          source_labels: [__meta_kubernetes_endpoint_port_name]
+          regex: (metrics|prometheus)
+        - action: keep
+          source_labels: [__meta_kubernetes_service_name]
+          regex: ingress-nginx-controller
+
+    - job_name: "livekit"
+      metrics_path: /metrics
+      scheme: http
+      kubernetes_sd_configs:
+        - role: endpoints
+      relabel_configs:
+        - action: keep
+          source_labels: [__meta_kubernetes_namespace]
+          regex: voco
+        - action: keep
+          source_labels: [__meta_kubernetes_service_name]
+          regex: livekit-svc
+        - action: keep
+          source_labels: [__meta_kubernetes_endpoint_port_name]
+          regex: signaling
+

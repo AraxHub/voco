@@ -1,0 +1,20 @@
+# Grafana только внутри кластера (ClusterIP), без Ingress.
+
+service:
+  type: ClusterIP
+
+ingress:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 512Mi
+
+# Не храним пароль в репо — helm сам создаст Secret.
+# Достаём так:
+# kubectl -n monitoring get secret grafana -o jsonpath='{.data.admin-password}' | base64 -d; echo
+
