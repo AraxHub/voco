@@ -23,7 +23,7 @@ server:
 # Под server: — чарт НЕ подмешивает scrape_configs.
 #
 # 1) ingress-nginx (cloud manifest): /metrics у controller-подов на :10254
-# 2) LiveKit: отдельный слушатель prometheus.port → endpoint port name prometheus
+# 2) LiveKit: role pod + pod-ip:6789 (role endpoints с NodePort часто даёт IP ноды и ломает scrape из Pod-сети)
 extraScrapeConfigs: |
   - job_name: "ingress-nginx"
     metrics_path: /metrics
@@ -40,6 +40,21 @@ extraScrapeConfigs: |
       - action: keep
         source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
         regex: controller
+      # Один pod — несколько объявленных портов → без фильтра дублируем скрейп :10254.
+      - action: keep
+        source_labels: [__meta_kubernetes_pod_container_port_name]
+        regex: http
+      # Дашборды (напр. Grafana.com 9614) в шаблонах используют фильтр `{namespace=~"…"}` по
+      # TARGET-лейблам Prometheus — без этого переменные пустые и графики без данных.
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        action: replace
+        target_label: node
       - source_labels: [__meta_kubernetes_pod_ip]
         regex: (.+)
         action: replace
@@ -50,15 +65,20 @@ extraScrapeConfigs: |
     metrics_path: /metrics
     scheme: http
     kubernetes_sd_configs:
-      - role: endpoints
+      - role: pod
+        namespaces:
+          names:
+            - voco
     relabel_configs:
       - action: keep
-        source_labels: [__meta_kubernetes_namespace]
-        regex: voco
+        source_labels: [__meta_kubernetes_pod_label_app]
+        regex: livekit
       - action: keep
-        source_labels: [__meta_kubernetes_service_name]
-        regex: livekit-svc
-      - action: keep
-        source_labels: [__meta_kubernetes_endpoint_port_name]
+        source_labels: [__meta_kubernetes_pod_container_port_name]
         regex: prometheus
+      - source_labels: [__meta_kubernetes_pod_ip]
+        regex: (.+)
+        action: replace
+        replacement: "${1}:6789"
+        target_label: __address__
 
