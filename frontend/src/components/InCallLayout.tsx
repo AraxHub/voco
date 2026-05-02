@@ -12,6 +12,7 @@ import { RoomEvent, Track } from 'livekit-client'
 import { useEffect, useState } from 'react'
 import { ChatDrawer } from './ChatDrawer'
 import { InCallControlBar } from './InCallControlBar'
+import { RoomDurationClock } from './RoomDurationClock'
 import { VocoFocusLayout, VocoParticipantTile } from './VocoParticipantTile'
 import './inCallLayout.css'
 
@@ -77,6 +78,11 @@ export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId }: Pr
   return (
     <div className="callShell">
       <div className="callShell__stage" style={{ ['--chat-open' as never]: chatOpen ? 1 : 0 }}>
+        <header className="callShell__masthead" aria-label="Voco · длительность звонка">
+          <span className="callShell__brand">voco</span>
+          <RoomDurationClock />
+        </header>
+
         <div className={`callShell__video ${chatOpen ? 'is-chat-open' : ''}`}>
           <div className="callShell__videoMain">
             <LayoutContextProvider value={layoutContext}>

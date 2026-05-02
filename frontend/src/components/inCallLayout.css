@@ -7,12 +7,82 @@
 .callShell__stage {
   position: absolute;
   inset: 0;
-  padding: 18px 18px 92px; /* space for bottom bar */
+  /* Боковые как раньше; снизу — зона под плавающую панель; сверху полоса = ½ нижнего зазора (веб-кам ощущение). */
+  --call-frame-side: 18px;
+  --call-frame-bottom: 92px;
+  --call-frame-top-strip: calc(var(--call-frame-bottom) / 2);
+
+  --call-masthead-to-video-gap: 12px;
+
+  padding: 0 var(--call-frame-side) var(--call-frame-bottom);
+  padding-top: env(safe-area-inset-top, 0px);
   --chat-width: 380px;
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--call-masthead-to-video-gap);
+}
+
+/* Верхняя полоса: слева бренд, по центру таймер (как титл у стрима) */
+.callShell__masthead {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  min-height: var(--call-frame-top-strip);
+}
+
+.callShell__brand {
+  position: relative;
+  z-index: 1;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+  user-select: none;
+}
+
+.callShell__masthead .roomDurationClock {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* Полоса над видео = шапка + gap; центр между верхом экрана и рамкой → вниз на ½ gap */
+  transform: translate(-50%, calc(-50% + var(--call-masthead-to-video-gap) / 2));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  min-height: 36px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 18, 0.45);
+  color: rgba(255, 255, 255, 0.92);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  user-select: none;
+  backdrop-filter: blur(10px);
+}
+
+.callShell__masthead .roomDurationClock__icon {
+  flex-shrink: 0;
+  opacity: 0.88;
+}
+
+.callShell__masthead .roomDurationClock__value {
+  min-width: 3.75ch;
+  text-align: center;
 }
 
 .callShell__video {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   transition: padding-right 220ms ease;
   padding-right: 0px;

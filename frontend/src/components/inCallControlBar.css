@@ -1,7 +1,7 @@
 .callBar {
   position: fixed;
   left: 50%;
-  bottom: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   z-index: 40;
   display: flex;
@@ -74,6 +74,8 @@
     width: min(520px, calc(100vw - 24px));
     justify-content: space-between;
     gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .callBar__btn {
@@ -84,4 +86,3 @@
     min-width: 64px;
   }
 }
-

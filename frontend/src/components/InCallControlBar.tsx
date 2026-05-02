@@ -37,24 +37,13 @@ export function InCallControlBar({ onCopyLink, copied }: Props) {
         </button>
       )}
 
-      <TrackToggle
-        source={Track.Source.Microphone}
-        className="callBar__btn"
-        aria-label="Микрофон"
-      />
-      <TrackToggle
-        source={Track.Source.Camera}
-        className="callBar__btn"
-        aria-label="Камера"
-      />
-      <TrackToggle
-        source={Track.Source.ScreenShare}
-        className="callBar__btn"
-        aria-label="Демонстрация экрана"
-      />
+      <TrackToggle source={Track.Source.Microphone} className="callBar__btn" aria-label="Микрофон" />
+
+      <TrackToggle source={Track.Source.Camera} className="callBar__btn" aria-label="Камера" />
+
+      <TrackToggle source={Track.Source.ScreenShare} className="callBar__btn" aria-label="Демонстрация экрана" />
 
       <DisconnectButton className="callBar__btn callBar__btn--leave">Выйти</DisconnectButton>
     </div>
   )
 }
-
