@@ -15,17 +15,59 @@ resources:
     memory: 512Mi
 
 # Не храним пароль в репо — helm сам создаст Secret.
-# Достаём так:
 # kubectl -n monitoring get secret grafana -o jsonpath='{.data.admin-password}' | base64 -d; echo
+#
+# Важно: Git push НЕ обновляет Grafana. Нужен:
+#   helm upgrade --install grafana grafana/grafana -n monitoring -f deployment/monitoring/values-grafana.yaml
+# и дождаться rollout (init-контейнер скачает дашборды при старте).
 
-# Тот же namespace, что и `helm upgrade --install prometheus ... -n monitoring` → сервис `prometheus-server`.
+# Релиз Prometheus в том же namespace → DNS short name.
+# uid нужен, чтобы импортированные дашборды стабильно ссылались на источник.
 datasources:
   datasources.yaml:
     apiVersion: 1
     datasources:
       - name: Prometheus
+        uid: prometheus
         type: prometheus
         url: http://prometheus-server
         access: proxy
         isDefault: true
+        jsonData:
+          httpMethod: POST
 
+# Провайдер «voco» должен совпадать с ключом в `dashboards:` ниже.
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: voco
+        orgId: 1
+        folder: Voco
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/voco
+
+# Скачивание при старте пода (скрипт в чарте). __inputs вида DS_PROMETHEUS → имя источника «Prometheus».
+dashboards:
+  voco:
+    node-exporter-full:
+      gnetId: 1860
+      revision: 37
+      datasource:
+        - name: DS_PROMETHEUS
+          value: Prometheus
+    nginx-ingress:
+      gnetId: 9614
+      revision: 1
+      datasource:
+        - name: DS_PROMETHEUS
+          value: Prometheus
+    kubernetes-workloads:
+      gnetId: 7249
+      revision: 1
+      datasource:
+        - name: DS_PROMETHEUS
+          value: Prometheus
