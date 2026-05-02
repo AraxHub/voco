@@ -39,11 +39,15 @@
   inset: 0;
   display: grid;
   place-items: center;
+  align-content: center;
   text-align: center;
   padding: 18px;
+  /* Кнопки камера/микрофон снизу (~66px + 16px + зазор) — не даём тексту наезжать */
+  padding-bottom: 108px;
   color: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(10px);
   background: rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
 }
 
 .pjPreview__placeholderTitle {
@@ -63,6 +67,29 @@
 .pjPreview__placeholderText {
   font-size: 20px;
   opacity: 0.85;
+  max-width: 22rem;
+  margin-inline: auto;
+  line-height: 1.35;
+}
+
+@media (max-width: 480px) {
+  .pjPreview__placeholder {
+    padding: 14px;
+    padding-bottom: 102px;
+  }
+
+  .pjPreview__placeholderTitle {
+    font-size: clamp(26px, 8vw, 36px);
+  }
+
+  .pjPreview__placeholderText {
+    font-size: 16px;
+    max-width: min(100%, 19rem);
+  }
+
+  .pjPreview__controls {
+    bottom: 12px;
+  }
 }
 
 @keyframes pjShimmer {
