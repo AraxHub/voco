@@ -7,6 +7,9 @@ data:
   livekit.yaml: |
     port: 7880
 
+    prometheus:
+      port: 6789
+
     logging:
       level: info
 

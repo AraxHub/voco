@@ -1,4 +1,5 @@
-# сервис Prometheus — ClusterIP, Ingress не создаём.
+# Лёгкая конфигурация Prometheus под один VPS (4GB RAM).
+# Важно: сервис Prometheus — ClusterIP, Ingress не создаём.
 
 alertmanager:
   enabled: false
@@ -20,26 +21,31 @@ server:
 
   # Доп. скрейп-джобы без ServiceMonitor/оператора:
   #
-  # 1) ingress-nginx:
-  #    стараемся найти service endpoints в namespace ingress-nginx с портом, который называется "metrics"
-  #    или "prometheus". Если у тебя ingress-nginx собран иначе — подправишь selectors.
+  # 1) ingress-nginx (upstream cloud manifest): у ingress-nginx-controller Service нет порта metrics;
+  #    /metrics висит на отдельном HTTP (:10254) у подов controller.
   #
-  # 2) livekit:
-  #    скрейпим сервис livekit-svc:7880 по пути /metrics (если endpoint включён).
+  # 2) LiveKit: prometheus.port задаёт второй слушатель; /metrics не на порту signaling (7880).
   extraScrapeConfigs: |
     - job_name: "ingress-nginx"
+      metrics_path: /metrics
+      scheme: http
       kubernetes_sd_configs:
-        - role: endpoints
+        - role: pod
       relabel_configs:
         - action: keep
           source_labels: [__meta_kubernetes_namespace]
           regex: ingress-nginx
         - action: keep
-          source_labels: [__meta_kubernetes_endpoint_port_name]
-          regex: (metrics|prometheus)
+          source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+          regex: ingress-nginx
         - action: keep
-          source_labels: [__meta_kubernetes_service_name]
-          regex: ingress-nginx-controller
+          source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_component]
+          regex: controller
+        - source_labels: [__meta_kubernetes_pod_ip]
+          regex: (.+)
+          action: replace
+          replacement: "${1}:10254"
+          target_label: __address__
 
     - job_name: "livekit"
       metrics_path: /metrics
@@ -55,5 +61,5 @@ server:
           regex: livekit-svc
         - action: keep
           source_labels: [__meta_kubernetes_endpoint_port_name]
-          regex: signaling
+          regex: prometheus
 

@@ -28,6 +28,9 @@ spec:
             - name: rtc-tcp
               containerPort: 7881
               protocol: TCP
+            - name: prometheus
+              containerPort: 6789
+              protocol: TCP
           volumeMounts:
             - name: config
               mountPath: /etc/livekit

@@ -17,3 +17,7 @@ spec:
       targetPort: rtc-tcp
       protocol: TCP
       nodePort: 7881
+    - name: prometheus
+      port: 6789
+      targetPort: prometheus
+      protocol: TCP
