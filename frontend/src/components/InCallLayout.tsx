@@ -1,8 +1,18 @@
-import { GridLayout, ParticipantTile, useTracks } from '@livekit/components-react'
+import { isEqualTrackRef, isTrackReference } from '@livekit/components-core'
+import {
+  CarouselLayout,
+  FocusLayoutContainer,
+  GridLayout,
+  LayoutContextProvider,
+  useCreateLayoutContext,
+  usePinnedTracks,
+  useTracks,
+} from '@livekit/components-react'
 import { RoomEvent, Track } from 'livekit-client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChatDrawer } from './ChatDrawer'
 import { InCallControlBar } from './InCallControlBar'
+import { VocoFocusLayout, VocoParticipantTile } from './VocoParticipantTile'
 import './inCallLayout.css'
 
 type Props = {
@@ -26,6 +36,8 @@ function IconChatHandle() {
 }
 
 export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId }: Props) {
+  const layoutContext = useCreateLayoutContext()
+
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -33,6 +45,21 @@ export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId }: Pr
     ],
     { updateOnlyOn: [RoomEvent.ActiveSpeakersChanged], onlySubscribed: false },
   )
+
+  const focusTrack = usePinnedTracks(layoutContext)?.[0]
+  const carouselTracks = tracks.filter((t) => !isEqualTrackRef(t, focusTrack))
+
+  useEffect(() => {
+    if (focusTrack && !isTrackReference(focusTrack)) {
+      const updated = tracks.find(
+        (tr) =>
+          tr.participant.identity === focusTrack.participant.identity && tr.source === focusTrack.source,
+      )
+      if (updated !== focusTrack && isTrackReference(updated)) {
+        layoutContext.pin.dispatch?.({ msg: 'set_pin', trackReference: updated })
+      }
+    }
+  }, [tracks, focusTrack, layoutContext.pin])
 
   const [copied, setCopied] = useState(false)
 
@@ -49,11 +76,24 @@ export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId }: Pr
 
   return (
     <div className="callShell">
-      <div className="callShell__stage" style={{ ['--chat-open' as any]: chatOpen ? 1 : 0 }}>
+      <div className="callShell__stage" style={{ ['--chat-open' as never]: chatOpen ? 1 : 0 }}>
         <div className={`callShell__video ${chatOpen ? 'is-chat-open' : ''}`}>
-          <GridLayout className="callGrid" tracks={tracks}>
-            <ParticipantTile disableSpeakingIndicator />
-          </GridLayout>
+          <div className="callShell__videoMain">
+            <LayoutContextProvider value={layoutContext}>
+              {!focusTrack ? (
+                <GridLayout className="callGrid" tracks={tracks}>
+                  <VocoParticipantTile disableSpeakingIndicator />
+                </GridLayout>
+              ) : (
+                <FocusLayoutContainer className="callShell__focusLayout">
+                  <CarouselLayout tracks={carouselTracks}>
+                    <VocoParticipantTile disableSpeakingIndicator />
+                  </CarouselLayout>
+                  {focusTrack && <VocoFocusLayout trackRef={focusTrack} />}
+                </FocusLayoutContainer>
+              )}
+            </LayoutContextProvider>
+          </div>
 
           {!chatOpen && (
             <button
@@ -76,4 +116,3 @@ export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId }: Pr
     </div>
   )
 }
-
