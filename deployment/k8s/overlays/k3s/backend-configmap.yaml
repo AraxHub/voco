@@ -5,19 +5,29 @@ metadata:
   namespace: voco
 data:
   VOCO_DEV_MODE: "false"
+  VOCO_RELEASE_MODE: "prod"
 
   # WSS через ingress (см. ingress-livekit-wss.yaml). DNS: lk → IP VPS.
   VOCO_LIVEKIT_URL: "wss://lk.voco-online.ru"
 
-  # Публичный URL API/инвайтов (HTTPS). Используем www как основной домен
-  # (apex voco-online.ru сейчас имеет кривой AAAA → Let's Encrypt падает).
+  # Публичный URL API/инвайтов (HTTPS). www — основной домен.
   VOCO_SERVER_BASE_URL: "https://www.voco-online.ru"
 
   # CORS: фронт на www.
   VOCO_SERVER_CORS_ALLOWED_ORIGINS: "https://www.voco-online.ru"
 
-  # Logging defaults (override via env if desired)
+  # Keycloak (JWT validation). Public URL reachable from backend + browsers.
+  VOCO_KEYCLOAK_ENABLED: "true"
+  VOCO_KEYCLOAK_URL: "https://auth.voco-online.ru"
+  VOCO_KEYCLOAK_REALM: "voco"
+  VOCO_KEYCLOAK_CLIENT_ID: "voco-frontend"
+
+  # Logging
   VOCO_LOG_FORMAT: "text"
   VOCO_LOG_LEVEL: "info"
   VOCO_LOG_SERVICE: "voco-backend"
   VOCO_LOG_ENV: "prod"
+
+  # Pool defaults (optional)
+  VOCO_PG_MAX_CONNS: "10"
+  VOCO_PG_CONNECT_TIMEOUT: "5s"

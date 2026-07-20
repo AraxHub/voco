@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"voco/internal/api/http/middlewares"
 	"voco/internal/domain"
 
 	"github.com/gin-gonic/gin"
@@ -22,17 +23,14 @@ type Controller struct {
 }
 
 func New(uc RoomUC, url string) *Controller {
-	return &Controller{
-		uc:      uc,
-		BaseUrl: url,
-	}
+	return &Controller{uc: uc, BaseUrl: url}
 }
 
-func (c *Controller) RegisterRoutes(r *gin.Engine) {
+func (c *Controller) RegisterRoutes(r *gin.Engine, mw middlewares.MW) {
 	api := r.Group("/api/v1")
 
-	api.POST("/rooms", c.createRoom)
 	api.POST("/rooms/:roomId/token", c.issueToken)
+	api.POST("/rooms", mw.Auth, c.createRoom)
 }
 
 func (c *Controller) createRoom(ctx *gin.Context) {

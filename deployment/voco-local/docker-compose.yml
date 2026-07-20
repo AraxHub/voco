@@ -1,4 +1,94 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: voco
+      POSTGRES_USER: voco
+      POSTGRES_PASSWORD: voco
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voco -d voco"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
+  keycloak:
+    build:
+      context: ./keycloak
+      dockerfile: Dockerfile
+    image: voco-local-keycloak:26.6.3
+    restart: unless-stopped
+    command:
+      [
+        "start-dev",
+        "--import-realm",
+        "--spi-theme-static-max-age=-1",
+        "--spi-theme-cache-themes=false",
+        "--spi-theme-cache-templates=false",
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      voco-migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/voco?currentSchema=keycloak
+      KC_DB_USERNAME: voco
+      KC_DB_PASSWORD: voco
+      KC_DB_SCHEMA: keycloak
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8180
+      KC_HOSTNAME_STRICT: "false"
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak/voco-realm.json:/opt/keycloak/data/import/voco-realm.json:ro
+      - ./keycloak/themes:/opt/keycloak/themes:ro
+    ports:
+      - "8180:8080"
+
+  keycloak-realm-setup:
+    build:
+      context: ./keycloak
+      dockerfile: Dockerfile
+    image: voco-local-keycloak:26.6.3
+    depends_on:
+      keycloak:
+        condition: service_started
+      mailpit:
+        condition: service_started
+    environment:
+      # Local defaults → Mailpit. For Resend set host/user/password in .env / override.
+      KC_SMTP_HOST: ${KC_SMTP_HOST:-mailpit}
+      KC_SMTP_PORT: ${KC_SMTP_PORT:-1025}
+      KC_SMTP_FROM: ${KC_SMTP_FROM:-noreply@voco.local}
+      KC_SMTP_FROM_DISPLAY_NAME: ${KC_SMTP_FROM_DISPLAY_NAME:-VOCO}
+      KC_SMTP_USER: ${KC_SMTP_USER:-}
+      KC_SMTP_PASSWORD: ${KC_SMTP_PASSWORD:-}
+      KC_SMTP_SSL: ${KC_SMTP_SSL:-false}
+      KC_SMTP_STARTTLS: ${KC_SMTP_STARTTLS:-false}
+      KC_SMTP_AUTH: ${KC_SMTP_AUTH:-false}
+    volumes:
+      - ./keycloak/apply-realm-theme.sh:/apply-realm-theme.sh:ro
+    entrypoint: ["/bin/sh", "/apply-realm-theme.sh"]
+    restart: "no"
+
   livekit:
     image: livekit/livekit-server:latest
     command: ["--config", "/etc/livekit.yaml"]
@@ -10,18 +100,44 @@ services:
     volumes:
       - ./livekit.yaml:/etc/livekit.yaml:ro
 
+  voco-migrate:
+    build:
+      context: ../..
+      dockerfile: deployment/voco-local/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      VOCO_RELEASE_MODE: dev
+      VOCO_PG_URL: postgres://voco:voco@postgres:5432/voco?sslmode=disable
+      VOCO_PG_MIGRATIONS_PATH: /app/migrations
+    command: ["/app/migrate", "-path", "/app/migrations", "up"]
+    restart: "no"
+
   voco-backend:
     build:
       context: ../..
       dockerfile: deployment/voco-local/Dockerfile
     restart: unless-stopped
+    extra_hosts:
+      - "localhost:host-gateway"
     env_file:
       - ./.env
     environment:
-      # This value is returned to the browser, so it must be reachable from host.
+      # Returned to the browser — must be reachable from the host.
       - VOCO_LIVEKIT_URL=ws://localhost:7880
+      - VOCO_PG_URL=postgres://voco:voco@postgres:5432/voco?sslmode=disable&search_path=voco
+      - VOCO_KEYCLOAK_ENABLED=true
+      - VOCO_KEYCLOAK_URL=http://localhost:8180
+      - VOCO_KEYCLOAK_REALM=voco
+      - VOCO_KEYCLOAK_CLIENT_ID=voco-frontend
     depends_on:
-      - livekit
+      livekit:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      voco-migrate:
+        condition: service_completed_successfully
     ports:
       - "8080:8080"
 
@@ -37,7 +153,12 @@ services:
       - ../../frontend:/app
       - /app/node_modules
     environment:
-      # Frontend calls backend via Vite proxy (/api -> voco-backend:8080)
       - VITE_API_BASE_URL=
       - VITE_PROXY_TARGET=http://voco-backend:8080
-    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+      - VITE_KEYCLOAK_URL=http://localhost:8180
+      - VITE_KEYCLOAK_REALM=voco
+      - VITE_KEYCLOAK_CLIENT_ID=voco-frontend
+    command: sh -c "[ -x node_modules/.bin/vite ] || npm ci; exec npm run dev -- --host 0.0.0.0 --port 5173"
+
+volumes:
+  postgres_data:

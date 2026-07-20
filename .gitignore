@@ -11,8 +11,14 @@
 .env.*
 !.env.example
 
+# CodeRio / Figma secrets (real config lives in ~/.coderio/)
+coderio.config.yml
+coderio.confug.yml
+.coderio/
+
 # VPS-only secrets files
 deployment/k3s/secrets.env
+deployment/k3s/frontend-build.env
 
 # Local ops notes (do not commit)
 deployment/k3s/README.md

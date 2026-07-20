@@ -13,14 +13,16 @@ import (
 )
 
 type Controller interface {
-	RegisterRoutes(r *gin.Engine)
+	RegisterRoutes(r *gin.Engine, mw middlewares.MW)
 }
 
 type Server struct {
 	cfg         ServerConfig
+	mw          middlewares.MW
 	server      *http.Server
 	log         *slog.Logger
 	controllers []Controller
+	extraRoutes []func(*gin.Engine)
 }
 
 type ServerConfig struct {
@@ -32,12 +34,19 @@ type ServerConfig struct {
 	AllowedOrigins []string      `envconfig:"CORS_ALLOWED_ORIGINS" default:"http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"`
 }
 
-func NewServer(cfg ServerConfig, log *slog.Logger) *Server {
-	return &Server{cfg: cfg, log: log}
+func NewServer(cfg ServerConfig, log *slog.Logger, mw middlewares.MW) *Server {
+	return &Server{cfg: cfg, log: log, mw: mw}
 }
 
 func (s *Server) AddController(c ...Controller) {
 	s.controllers = append(s.controllers, c...)
+}
+
+func (s *Server) AddRoutes(fn func(*gin.Engine)) {
+	if fn == nil {
+		return
+	}
+	s.extraRoutes = append(s.extraRoutes, fn)
 }
 
 // Start поднимает роутер, запускает сервер и блокируется до отмены ctx, затем делает graceful shutdown.
@@ -55,7 +64,10 @@ func (s *Server) Start(ctx context.Context) error {
 	}))
 
 	for _, c := range s.controllers {
-		c.RegisterRoutes(r)
+		c.RegisterRoutes(r, s.mw)
+	}
+	for _, fn := range s.extraRoutes {
+		fn(r)
 	}
 
 	s.server = &http.Server{

@@ -1,0 +1,58 @@
+/* VOCO account console — Aurora Circuit */
+
+:root {
+  --voco-bg-0: #080c10;
+  --voco-bg-1: #060a0e;
+  --voco-border: rgba(255, 255, 255, 0.1);
+  --voco-text: #e8eef5;
+  --voco-muted: rgba(200, 220, 230, 0.62);
+  --voco-accent: #1de9b6;
+}
+
+body,
+.pf-v5-c-page {
+  background:
+    radial-gradient(780px 520px at 12% 12%, rgba(29, 233, 182, 0.12), transparent 68%),
+    radial-gradient(640px 480px at 88% 10%, rgba(0, 212, 255, 0.08), transparent 70%),
+    linear-gradient(180deg, var(--voco-bg-0) 0%, var(--voco-bg-1) 100%) !important;
+  color: var(--voco-text) !important;
+}
+
+.pf-v5-c-masthead,
+.pf-v5-c-page__header {
+  background: rgba(12, 20, 30, 0.88) !important;
+  border-bottom: 1px solid var(--voco-border) !important;
+  backdrop-filter: blur(20px);
+}
+
+.pf-v5-c-page__main-section,
+.pf-v5-c-card {
+  background: rgba(12, 20, 30, 0.72) !important;
+  border: 1px solid var(--voco-border) !important;
+  border-radius: 16px !important;
+  color: var(--voco-text) !important;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.pf-v5-c-button.pf-m-primary {
+  background: linear-gradient(130deg, #1de9b6 0%, #00c8ef 45%, #c8a248 100%) !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  color: #06121c !important;
+}
+
+.pf-v5-c-form-control {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: var(--voco-text) !important;
+}
+
+.pf-v5-c-form-control:focus-within {
+  border-color: rgba(29, 233, 182, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(29, 233, 182, 0.1) !important;
+}
+
+a {
+  color: #00d4ff !important;
+}

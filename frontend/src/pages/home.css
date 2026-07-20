@@ -14,6 +14,54 @@
   gap: 16px;
 }
 
+.home__headerRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.home__auth {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.home__link {
+  color: var(--text-h);
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.home__settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, rgba(164, 77, 255, 0.35), rgba(31, 140, 249, 0.18));
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.home__settings:hover {
+  filter: brightness(1.12);
+  transform: scale(1.04);
+}
+
+.home__settingsIcon {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
 .home__brand {
   font-weight: 700;
   letter-spacing: 0.4px;

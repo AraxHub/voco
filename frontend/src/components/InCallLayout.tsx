@@ -10,6 +10,7 @@ import {
 } from '@livekit/components-react'
 import { RoomEvent, Track } from 'livekit-client'
 import { useEffect, useState } from 'react'
+import { CircuitCorners } from '../ui/CircuitTrace'
 import { ChatDrawer } from './ChatDrawer'
 import { InCallControlBar } from './InCallControlBar'
 import { RoomDurationClock } from './RoomDurationClock'
@@ -85,6 +86,9 @@ export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId }: Pr
 
         <div className={`callShell__video ${chatOpen ? 'is-chat-open' : ''}`}>
           <div className="callShell__videoMain">
+            <div className="callShell__circuit" aria-hidden>
+              <CircuitCorners armLength={6} color="rgba(29,233,182,0.65)" interval={7000} />
+            </div>
             <LayoutContextProvider value={layoutContext}>
               {!focusTrack ? (
                 <GridLayout className="callGrid" tracks={tracks}>

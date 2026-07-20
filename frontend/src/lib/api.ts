@@ -17,13 +17,24 @@ export type IssueTokenResponse = {
   message?: string
 }
 
+import { getAuthToken } from './session'
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL?.toString().trim() || ''
+
+function authHeaders(): HeadersInit {
+  const token = getAuthToken()
+  if (!token) {
+    return {}
+  }
+  return { Authorization: `Bearer ${token}` }
+}
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders(),
       ...(init?.headers || {}),
     },
   })

@@ -3,23 +3,27 @@ package app
 import (
 	"log"
 	"os"
+	"voco/internal/adapters/livekit"
+	"voco/internal/adapters/memory"
+	"voco/internal/adapters/postgres"
 	"voco/internal/api/http"
+	"voco/internal/pkg/auth"
 	"voco/internal/pkg/logger"
-	"voco/internal/repository/cache/inmemory"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
-	"voco/internal/repository/liveKit"
 )
 
 const AppName = "VOCO"
 
 type Config struct {
-	Server  http.ServerConfig `envconfig:"server"`
-	Cache   inmemory.Config   `envconfig:"cache"`
-	LiveKit liveKit.Cfg       `envconfig:"livekit"`
-	Log     logger.Config     `envconfig:"log"`
-	DevMode bool              `envconfig:"dev_mode"`
+	Server   http.ServerConfig `envconfig:"server"`
+	Cache    memory.Config     `envconfig:"cache"`
+	LiveKit  livekit.Cfg       `envconfig:"livekit"`
+	Pg       postgres.Config   `envconfig:"pg"`
+	Keycloak auth.Config       `envconfig:"keycloak"`
+	Log      logger.Config     `envconfig:"log"`
+	DevMode  bool              `envconfig:"dev_mode"`
 }
 
 func MustLoadCfg(ReleaseMode string) (Config, error) {

@@ -1,25 +1,15 @@
 package rooms
 
 import (
-	"context"
-	"time"
-	"voco/internal/repository/liveKit"
-
-	"voco/internal/domain"
+	"voco/internal/adapters/livekit"
 )
 
-type RoomStore interface {
-	Get(ctx context.Context, id domain.RoomID) (domain.Room, bool, error)
-	Upsert(ctx context.Context, room domain.Room, ttl time.Duration) error
-	Delete(ctx context.Context, id domain.RoomID) error
-}
-
 type RoomUsecase struct {
-	store      RoomStore
-	LiveKitCfg liveKit.Cfg
+	store      Store
+	LiveKitCfg livekit.Cfg
 }
 
-func New(store RoomStore, liveKitCfg liveKit.Cfg) *RoomUsecase {
+func New(store Store, liveKitCfg livekit.Cfg) *RoomUsecase {
 	return &RoomUsecase{
 		store:      store,
 		LiveKitCfg: liveKitCfg,

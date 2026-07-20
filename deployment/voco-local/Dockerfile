@@ -10,6 +10,7 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o /out/voco ./cmd/voco
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o /out/migrate ./cmd/migrate
 
 
 FROM alpine:3.21
@@ -19,6 +20,8 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /app
 
 COPY --from=builder /out/voco /app/voco
+COPY --from=builder /out/migrate /app/migrate
+COPY migrations /app/migrations
 COPY deployment/voco-local/.env /app/.env
 
 EXPOSE 8080

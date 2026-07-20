@@ -2,10 +2,15 @@ import '@livekit/components-styles'
 import { LiveKitRoom, RoomAudioRenderer } from '@livekit/components-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { AuthGate } from '../components/AuthGate'
 import { InCallLayout } from '../components/InCallLayout'
 import { PreJoinPreview } from '../components/PreJoinPreview'
+import { useAuth } from '../context/AuthContext'
 import { issueToken } from '../lib/api'
-import './room.css'
+import { allowGuestAccess, hasGuestAccess } from '../lib/guestSession'
+import { PrimaryButton, NavButton } from '../ui/Button'
+import { StatusMessage } from '../ui/Card'
+import { GlassInput } from '../ui/Input'
 
 type JoinState =
   | { phase: 'prejoin' }
@@ -15,9 +20,11 @@ type JoinState =
 
 export function RoomPage() {
   const nav = useNavigate()
+  const auth = useAuth()
   const { roomId } = useParams()
   const id = (roomId || '').trim()
 
+  const [guestAllowed, setGuestAllowed] = useState(() => hasGuestAccess(id))
   const [name, setName] = useState('')
   const [cameraOn, setCameraOn] = useState(false)
   const [micOn, setMicOn] = useState(true)
@@ -28,6 +35,18 @@ export function RoomPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
   const canJoin = useMemo(() => id.length > 0 && name.trim().length > 0, [id, name])
+
+  const showAuthGate =
+    auth.enabled && auth.ready && !auth.authenticated && !guestAllowed && id.length > 0
+
+  useEffect(() => {
+    setGuestAllowed(hasGuestAccess(id))
+  }, [id])
+
+  useEffect(() => {
+    if (!auth.authenticated || !auth.username) return
+    setName((prev) => (prev.trim() ? prev : auth.username ?? ''))
+  }, [auth.authenticated, auth.username])
 
   function stopPreview() {
     setPreviewStream((s) => {
@@ -87,6 +106,11 @@ export function RoomPage() {
     }
   }
 
+  function onContinueAsGuest() {
+    allowGuestAccess(id)
+    setGuestAllowed(true)
+  }
+
   useEffect(() => {
     if (joinState.phase !== 'joined') return
     setChatOpen(false)
@@ -94,18 +118,33 @@ export function RoomPage() {
 
   if (!id) {
     return (
-      <div className="roomPage">
-        <div className="roomPage__error">Нет roomId в URL</div>
-        <button className="btn" onClick={() => nav('/')}>
-          На главную
-        </button>
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          gap: 16,
+        }}
+      >
+        <StatusMessage type="error">Нет roomId в URL</StatusMessage>
+        <NavButton onClick={() => nav('/')}>На главную</NavButton>
       </div>
     )
   }
 
+  if (auth.enabled && !auth.ready) {
+    return <div className="authBoot">Загрузка…</div>
+  }
+
+  if (showAuthGate) {
+    return <AuthGate mode="room" onGuest={onContinueAsGuest} />
+  }
+
   if (joinState.phase === 'joined') {
     return (
-      <div className="roomPage roomPage--inCall roomPage--noHighlight">
+      <div style={{ position: 'relative', zIndex: 1, height: '100vh' }}>
         <LiveKitRoom
           token={joinState.token}
           serverUrl={joinState.livekitUrl}
@@ -113,7 +152,6 @@ export function RoomPage() {
           video={cameraOn}
           audio={micOn}
           onDisconnected={() => {
-            // Privacy-by-default on leave: stop camera preview, reset toggles, go back to prejoin.
             stopPreview()
             setCameraOn(false)
             setMicOn(false)
@@ -134,15 +172,32 @@ export function RoomPage() {
     )
   }
 
-  return (
-    <div className="roomPage">
-      <main className="roomJoin">
-        <div className="roomJoin__top">
-          <button className="linkBtn" onClick={() => nav('/')}>
-            ← Назад
-          </button>
-        </div>
+  const joinLabel = auth.authenticated ? 'Присоединиться к звонку' : 'Подключиться'
+  const joining = joinState.phase === 'joining'
 
+  return (
+    <div
+      className="fade-in-up"
+      style={{
+        position: 'relative',
+        zIndex: 1,
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '32px 16px',
+      }}
+    >
+      <NavButton
+        type="button"
+        onClick={() => nav('/')}
+        style={{ position: 'absolute', top: 28, left: 32 }}
+      >
+        ← Назад
+      </NavButton>
+
+      <div style={{ width: '100%', maxWidth: 680, display: 'flex', flexDirection: 'column', gap: 28 }}>
         <PreJoinPreview
           videoRef={videoRef}
           cameraOn={cameraOn}
@@ -152,27 +207,39 @@ export function RoomPage() {
           onToggleMic={() => setMicOn((v) => !v)}
         />
 
-        <div className="roomJoin__stack">
-          <input
-            className="input roomJoin__name"
+        <div
+          style={{
+            padding: '28px 32px',
+            borderRadius: 16,
+            background: 'var(--voco-card)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid var(--voco-border-soft)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 24,
+          }}
+        >
+          <GlassInput
+            label="Ваше имя"
+            placeholder="Введите ваше имя"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Введите ваше имя"
             autoFocus
           />
 
-          <button
-            className="btn3d"
-            disabled={!canJoin || joinState.phase === 'joining'}
-            onClick={onJoin}
+          <PrimaryButton
+            fullWidth
+            loading={joining}
+            disabled={!canJoin || joining}
+            onClick={() => void onJoin()}
+            style={{ fontSize: 15, padding: '15px 36px' }}
           >
-            {joinState.phase === 'joining' ? 'Подключаемся…' : 'Подключиться'}
-          </button>
+            {joining ? 'Подключаемся…' : joinLabel}
+          </PrimaryButton>
 
-          {joinState.phase === 'error' && <div className="errorBox">{joinState.message}</div>}
+          {joinState.phase === 'error' && <StatusMessage type="error">{joinState.message}</StatusMessage>}
         </div>
-      </main>
+      </div>
     </div>
   )
 }
-

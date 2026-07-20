@@ -1,0 +1,442 @@
+/* VOCO login — Aurora Circuit (match frontend) */
+
+:root,
+html.login-pf,
+html.pf-v5-theme-dark {
+  color-scheme: dark !important;
+  --voco-bg-0: #080c10;
+  --voco-bg-1: #060a0e;
+  --voco-card: rgba(12, 20, 30, 0.82);
+  --voco-border: rgba(255, 255, 255, 0.1);
+  --voco-text: #e8eef5;
+  --voco-muted: rgba(200, 220, 230, 0.62);
+  --voco-accent: #1de9b6;
+  --voco-accent-2: #00d4ff;
+  --voco-gold: #d4a853;
+  --pf-v5-global--BackgroundColor--100: #080c10 !important;
+  --pf-v5-global--BackgroundColor--200: #0c141c !important;
+  --pf-v5-global--Color--100: #e8eef5 !important;
+  --pf-v5-global--Color--200: rgba(200, 220, 230, 0.72) !important;
+  --pf-v5-global--primary-color--100: #1de9b6 !important;
+  --pf-v5-c-form-control--Color: #e8eef5 !important;
+  --pf-v5-c-form-control--BackgroundColor: rgba(255, 255, 255, 0.05) !important;
+  --pf-v5-c-form__label--Color: #e8eef5 !important;
+  --pf-v5-c-title--Color: #e8eef5 !important;
+  --pf-v5-c-button--m-primary--Color: #06121c !important;
+}
+
+@keyframes voco-aurora-a {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
+  50% { transform: translate(3%, -4%) scale(1.06); opacity: 0.85; }
+}
+
+@keyframes voco-aurora-b {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+  50% { transform: translate(-4%, 3%) scale(1.08); opacity: 0.7; }
+}
+
+@keyframes voco-surge {
+  0% { stroke-dashoffset: 420; opacity: 0; }
+  10% { opacity: 0.9; }
+  75% { opacity: 0.55; }
+  100% { stroke-dashoffset: -60; opacity: 0; }
+}
+
+html.login-pf,
+html.login-pf body,
+body#keycloak-bg,
+.login-pf body,
+.pf-v5-c-login,
+.pf-v5-c-login__container {
+  background: #080c10 !important;
+  min-height: 100vh;
+  color: var(--voco-text) !important;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Atmospheric layers behind the login card */
+html.login-pf body::before,
+body#keycloak-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(780px 520px at 12% 12%, rgba(29, 233, 182, 0.14), transparent 68%),
+    radial-gradient(640px 480px at 88% 8%, rgba(0, 212, 255, 0.1), transparent 70%),
+    radial-gradient(520px 380px at 55% 88%, rgba(212, 168, 83, 0.07), transparent 72%),
+    radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(8, 12, 16, 0.55) 100%),
+    linear-gradient(180deg, #080c10 0%, #060a0e 100%);
+}
+
+html.login-pf body::after,
+body#keycloak-bg::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    radial-gradient(280px 180px at 18% 22%, rgba(29, 233, 182, 0.18), transparent 70%),
+    radial-gradient(240px 160px at 82% 30%, rgba(0, 212, 255, 0.14), transparent 70%);
+  animation: voco-aurora-a 16s ease-in-out infinite;
+}
+
+/* Kill PatternFly light-mode black text on our dark surfaces. */
+html.login-pf body,
+html.login-pf .pf-v5-c-login,
+html.login-pf .pf-v5-c-login__main,
+html.login-pf .pf-v5-c-login__main-header,
+html.login-pf .pf-v5-c-login__main-body,
+html.login-pf .pf-v5-c-title,
+html.login-pf .pf-v5-c-form,
+html.login-pf .pf-v5-c-form__label,
+html.login-pf .pf-v5-c-form__label-text,
+html.login-pf label,
+html.login-pf p,
+html.login-pf li,
+html.login-pf span:not(.pf-v5-c-form-control__toggle-icon):not(.pf-v5-svg):not(.pf-v5-c-helper-text__item-text):not(.kc-feedback-text):not([id^='input-error']),
+html.login-pf strong,
+html.login-pf b,
+html.login-pf h1,
+html.login-pf h2,
+html.login-pf h3,
+html.login-pf .instruction,
+html.login-pf #kc-page-title,
+html.login-pf #kc-content-wrapper,
+html.login-pf #kc-info-message,
+html.login-pf #kc-attempted-username {
+  color: var(--voco-text) !important;
+}
+
+#kc-header,
+#kc-header-wrapper,
+.pf-v5-c-brand,
+.pf-v5-c-login__header {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.kc-logo-text {
+  display: none !important;
+}
+
+#kc-header-wrapper.pf-v5-c-brand {
+  background: url('../img/voco-logo.svg') no-repeat center center !important;
+  background-size: contain !important;
+  height: 56px !important;
+  margin: 24px auto 8px !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  text-indent: -9999px;
+  overflow: hidden;
+}
+
+.pf-v5-c-login__main,
+#kc-content,
+.card-pf,
+.login-pf-page .card-pf {
+  background: var(--voco-card) !important;
+  border: 1px solid var(--voco-border) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 4px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  color: var(--voco-text) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Soft circuit rim on the card */
+.pf-v5-c-login__main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(29, 233, 182, 0.22), transparent) top / 55% 1px no-repeat,
+    linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.16), transparent) right / 1px 40% no-repeat;
+  opacity: 0.85;
+}
+
+.pf-v5-c-form-control,
+.pf-v5-c-form-control input,
+.pf-v5-c-form-control.pf-m-readonly,
+.pf-v5-c-form-control.pf-m-readonly input,
+input[type='text'],
+input[type='password'],
+input[type='email'],
+input[type='number'],
+input#emailCode,
+input#username,
+input#password,
+input#kc-attempted-username,
+select,
+textarea {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: #e8eef5 !important;
+  -webkit-text-fill-color: #e8eef5 !important;
+  caret-color: #1de9b6 !important;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+}
+
+.pf-v5-c-form-control:focus-within,
+.pf-v5-c-form-control input:focus,
+input[type='text']:focus,
+input[type='password']:focus,
+input[type='email']:focus {
+  background: rgba(29, 233, 182, 0.05) !important;
+  border-color: rgba(29, 233, 182, 0.5) !important;
+  box-shadow:
+    0 0 0 3px rgba(29, 233, 182, 0.1),
+    inset 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+  outline: none !important;
+}
+
+.pf-v5-c-form-control::placeholder,
+input::placeholder {
+  color: var(--voco-muted) !important;
+  -webkit-text-fill-color: var(--voco-muted) !important;
+  opacity: 1 !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e8eef5 !important;
+  box-shadow: 0 0 0 1000px #0c141c inset !important;
+  transition: background-color 99999s ease-out;
+}
+
+select,
+select option,
+#login-select-toggle,
+#login-select-toggle option {
+  background: #0c141c !important;
+  color: #e8eef5 !important;
+}
+
+.pf-v5-c-button.pf-m-primary,
+#kc-login,
+input.pf-v5-c-button.pf-m-primary,
+button.pf-v5-c-button.pf-m-primary,
+.btn-primary,
+.voco-cta,
+#kc-otp-login-form input[name='login'],
+#kc-otp-submit {
+  background: linear-gradient(130deg, #1de9b6 0%, #00c8ef 45%, #c8a248 100%) !important;
+  background-size: 200% 200% !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  color: #06121c !important;
+  -webkit-text-fill-color: #06121c !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem !important;
+  box-shadow: 0 0 24px rgba(29, 233, 182, 0.22), 0 6px 28px rgba(0, 0, 0, 0.35) !important;
+  transition: filter 0.15s ease, transform 0.14s ease, box-shadow 0.14s ease !important;
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+.voco-cta:hover,
+#kc-login:hover {
+  filter: brightness(1.06);
+  color: #06121c !important;
+  -webkit-text-fill-color: #06121c !important;
+  transform: translateY(-1px);
+}
+
+.pf-v5-c-button.pf-m-primary:active,
+#kc-login:active {
+  transform: scale(0.985) translateY(1px);
+}
+
+.pf-v5-c-button:not(.pf-m-primary):not(.pf-m-link),
+.pf-v5-c-button.pf-m-secondary,
+.pf-v5-c-button.pf-m-control,
+.voco-btn-secondary,
+#kc-otp-login-form input[name='resend'],
+#kc-otp-login-form input[name='cancel'],
+input.pf-v5-c-button:not(.pf-m-primary),
+button.pf-v5-c-button:not(.pf-m-primary) {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 9999px !important;
+  color: #c8d8e8 !important;
+  -webkit-text-fill-color: #c8d8e8 !important;
+  min-height: 44px;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease !important;
+}
+
+.pf-v5-c-button:not(.pf-m-primary):not(.pf-m-link):hover,
+.voco-btn-secondary:hover {
+  border-color: rgba(29, 233, 182, 0.45) !important;
+  color: #1de9b6 !important;
+  -webkit-text-fill-color: #1de9b6 !important;
+  background: rgba(29, 233, 182, 0.08) !important;
+}
+
+a,
+.pf-v5-c-button.pf-m-link,
+#kc-registration a,
+#kc-form-options a {
+  color: var(--voco-accent-2) !important;
+}
+
+.pf-v5-c-helper-text,
+.pf-v5-c-form__helper-text,
+#kc-info-wrapper,
+.login-pf-signup,
+.instruction,
+.voco-info-text,
+.voco-otp-hint {
+  color: var(--voco-muted) !important;
+}
+
+.voco-info-text strong,
+.voco-otp-hint strong,
+#kc-otp-login-form label strong {
+  color: var(--voco-accent) !important;
+}
+
+.voco-info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0 8px;
+}
+
+.voco-info-secondary {
+  margin-top: 4px;
+  font-size: 0.95rem;
+}
+
+.voco-otp-error,
+#input-error-otp-code,
+.pf-v5-c-form__helper-text.pf-m-error,
+.pf-v5-c-helper-text.pf-m-error,
+.pf-v5-c-helper-text__item.pf-m-error,
+.pf-v5-c-helper-text__item-text.pf-m-error,
+.kc-feedback-text,
+span[id^='input-error'],
+div[id^='input-error'] .pf-v5-c-helper-text__item-text,
+div[id^='input-error-container'] .pf-v5-c-helper-text__item-text,
+.pf-m-error > .pf-v5-c-helper-text__item-text,
+.pf-v5-c-helper-text__item.pf-m-error .pf-v5-c-helper-text__item-text {
+  color: #f4a0a0 !important;
+  -webkit-text-fill-color: #f4a0a0 !important;
+}
+
+.pf-v5-c-form-control.pf-m-error,
+.pf-v5-c-form-control.pf-m-error input,
+span.pf-v5-c-form-control.pf-m-error {
+  border-color: rgba(220, 80, 80, 0.55) !important;
+}
+
+.pf-v5-c-form-control__icon.pf-m-status,
+.pf-v5-c-form-control__icon.pf-m-status i,
+.fa-exclamation-circle {
+  color: #f4a0a0 !important;
+}
+
+.pf-v5-c-alert,
+.alert-error,
+.pf-m-danger,
+.pf-v5-c-alert__title,
+.pf-v5-c-alert__description {
+  border-radius: 12px !important;
+  color: #ffe0e0 !important;
+  background: rgba(200, 60, 60, 0.12) !important;
+  border: 1px solid rgba(200, 60, 60, 0.3) !important;
+}
+
+/* OTP digit cells */
+.voco-otp-cells {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 8px 0 4px;
+  flex-wrap: nowrap;
+}
+
+.voco-otp-cell {
+  width: 52px !important;
+  height: 64px !important;
+  min-width: 44px;
+  padding: 0 !important;
+  text-align: center !important;
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #e8eef5 !important;
+  -webkit-text-fill-color: #e8eef5 !important;
+  caret-color: #1de9b6 !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+}
+
+.voco-otp-cell:focus {
+  outline: none !important;
+  background: rgba(29, 233, 182, 0.06) !important;
+  border-color: rgba(29, 233, 182, 0.65) !important;
+  box-shadow: 0 0 0 3px rgba(29, 233, 182, 0.14), 0 0 18px rgba(29, 233, 182, 0.18) !important;
+}
+
+.voco-otp-actions,
+#kc-form-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+#kc-locale,
+#kc-locale-dropdown,
+.pf-v5-c-login__main-header-utilities {
+  color: var(--voco-muted) !important;
+}
+
+.pf-v5-c-form-control__toggle-icon svg,
+.pf-v5-svg {
+  fill: var(--voco-muted) !important;
+  color: var(--voco-muted) !important;
+}
+
+@media (max-width: 420px) {
+  .voco-otp-cells {
+    gap: 6px;
+  }
+
+  .voco-otp-cell {
+    width: 42px !important;
+    height: 54px !important;
+    font-size: 1.4rem !important;
+    border-radius: 12px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.login-pf body::after,
+  body#keycloak-bg::after {
+    animation: none !important;
+  }
+}

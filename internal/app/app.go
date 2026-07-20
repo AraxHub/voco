@@ -7,10 +7,13 @@ import (
 	"syscall"
 	"time"
 
+	"voco/internal/adapters/memory"
+	pgadapter "voco/internal/adapters/postgres"
 	httpapi "voco/internal/api/http"
 	roomscontroller "voco/internal/api/http/controllers/rooms"
+	"voco/internal/api/http/middlewares"
+	"voco/internal/pkg/auth"
 	"voco/internal/pkg/logger"
-	"voco/internal/repository/cache/inmemory"
 	roomsuc "voco/internal/usecase/rooms"
 )
 
@@ -29,13 +32,29 @@ func (a *App) Run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	store := inmemory.NewCache(a.cfg.Cache)
-	store.CleanUp(ctx, time.Hour)
+	db, err := pgadapter.New(ctx, a.cfg.Pg)
+	if err != nil {
+		log.Error("postgres connect failed", "error", err)
+		return err
+	}
+	defer db.Close()
 
-	roomsUseCase := roomsuc.New(store, a.cfg.LiveKit)
+	cache := memory.NewCache(a.cfg.Cache)
+	cache.CleanUp(ctx, time.Hour)
+
+	authSvc, err := auth.New(ctx, a.cfg.Keycloak)
+	if err != nil {
+		log.Error("auth init failed", "error", err)
+		return err
+	}
+	if authSvc.Enabled() {
+		log.Info("auth enabled", "keycloak", true)
+	}
+
+	roomsUseCase := roomsuc.New(cache, a.cfg.LiveKit)
 	roomsCtrl := roomscontroller.New(roomsUseCase, a.cfg.Server.BaseUrl)
 
-	server := httpapi.NewServer(a.cfg.Server, log)
+	server := httpapi.NewServer(a.cfg.Server, log, middlewares.NewMW(authSvc))
 	server.AddController(roomsCtrl)
 
 	if err := server.Start(ctx); err != nil {

@@ -1,4 +1,4 @@
-package liveKit
+package livekit
 
 import "time"
 
