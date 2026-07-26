@@ -71,5 +71,5 @@ export async function updateAccount(profile: AccountProfile): Promise<void> {
 
 export async function refreshKeycloakToken(): Promise<void> {
   if (!keycloak?.authenticated) return
-  await keycloak.updateToken(30)
+  await keycloak.updateToken(-1)
 }

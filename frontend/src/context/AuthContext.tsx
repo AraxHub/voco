@@ -28,6 +28,8 @@ type AuthState = {
   login: (redirectUri?: string) => Promise<void>
   logout: () => Promise<void>
   register: (redirectUri?: string) => Promise<void>
+  /** Force-refresh access token claims (e.g. after profile edit). */
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -53,6 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [displayName, setDisplayName] = useState<string | null>(null)
   const [token, setToken] = useState<string | undefined>(undefined)
 
+  const syncFromToken = useCallback(() => {
+    setUsername(readKeycloakUsername())
+    setDisplayName(readKeycloakDisplayName())
+    setToken(getAccessToken())
+  }, [])
+
   useEffect(() => {
     if (!keycloakEnabled) {
       setReady(true)
@@ -62,9 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (keycloak) {
       keycloak.onAuthSuccess = () => {
         setAuthenticated(true)
-        setUsername(readKeycloakUsername())
-        setDisplayName(readKeycloakDisplayName())
-        setToken(getAccessToken())
+        syncFromToken()
+      }
+      keycloak.onAuthRefreshSuccess = () => {
+        syncFromToken()
       }
       keycloak.onAuthLogout = () => {
         setAuthenticated(false)
@@ -77,12 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void initKeycloak()
       .then((ok) => {
         setAuthenticated(ok)
-        setUsername(readKeycloakUsername())
-        setDisplayName(readKeycloakDisplayName())
-        setToken(getAccessToken())
+        syncFromToken()
       })
       .finally(() => setReady(true))
-  }, [])
+  }, [syncFromToken])
 
   const handleLogin = useCallback(async (redirectUri?: string) => {
     await login(redirectUri)
@@ -100,6 +107,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await register(redirectUri)
   }, [])
 
+  const refreshProfile = useCallback(async () => {
+    if (!keycloak?.authenticated) return
+    // -1 forces a new access token so given_name / name claims update.
+    await keycloak.updateToken(-1)
+    syncFromToken()
+  }, [syncFromToken])
+
   const value = useMemo<AuthState>(
     () => ({
       enabled: keycloakEnabled,
@@ -111,8 +125,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login: handleLogin,
       logout: handleLogout,
       register: handleRegister,
+      refreshProfile,
     }),
-    [ready, authenticated, username, displayName, token, handleLogin, handleLogout, handleRegister],
+    [
+      ready,
+      authenticated,
+      username,
+      displayName,
+      token,
+      handleLogin,
+      handleLogout,
+      handleRegister,
+      refreshProfile,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

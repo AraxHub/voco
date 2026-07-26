@@ -33,6 +33,7 @@ export function RoomPage() {
 
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const lastPresetNameRef = useRef<string | null>(null)
 
   const canJoin = useMemo(() => id.length > 0 && name.trim().length > 0, [id, name])
 
@@ -46,7 +47,12 @@ export function RoomPage() {
   useEffect(() => {
     const preset = auth.displayName || auth.username
     if (!auth.authenticated || !preset) return
-    setName((prev) => (prev.trim() ? prev : preset))
+    setName((prev) => {
+      // Fill empty field, or replace if user hasn't typed a custom name yet.
+      if (!prev.trim() || prev === lastPresetNameRef.current) return preset
+      return prev
+    })
+    lastPresetNameRef.current = preset
   }, [auth.authenticated, auth.displayName, auth.username])
 
   function stopPreview() {

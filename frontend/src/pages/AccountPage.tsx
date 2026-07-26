@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext'
 import { changePassword } from '../lib/keycloak'
 import {
   fetchAccount,
-  refreshKeycloakToken,
   updateAccount,
   type AccountProfile,
 } from '../lib/keycloakAccount'
@@ -89,7 +88,7 @@ export function AccountPage() {
         email: email.trim(),
       }
       await updateAccount(next)
-      await refreshKeycloakToken()
+      await auth.refreshProfile()
       setProfile(next)
       setProfileOk('Профиль успешно сохранён.')
     } catch (err) {
