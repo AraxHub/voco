@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { AuthGate } from '../components/AuthGate'
 import { useAuth } from '../context/AuthContext'
 import { createRoom } from '../lib/api'
-import { PrimaryButton, SecondaryButton, GhostButton, NavButton } from '../ui/Button'
+import { PrimaryButton, SecondaryButton, GhostButton } from '../ui/Button'
 import { StatusMessage } from '../ui/Card'
 import { GlassInput } from '../ui/Input'
 
@@ -171,7 +171,6 @@ export function HomePage() {
                   />
                 </svg>
               </Link>
-              <NavButton onClick={() => void auth.logout()}>Выйти</NavButton>
             </>
           )}
         </div>
