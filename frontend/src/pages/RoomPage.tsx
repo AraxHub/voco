@@ -44,9 +44,10 @@ export function RoomPage() {
   }, [id])
 
   useEffect(() => {
-    if (!auth.authenticated || !auth.username) return
-    setName((prev) => (prev.trim() ? prev : auth.username ?? ''))
-  }, [auth.authenticated, auth.username])
+    const preset = auth.displayName || auth.username
+    if (!auth.authenticated || !preset) return
+    setName((prev) => (prev.trim() ? prev : preset))
+  }, [auth.authenticated, auth.displayName, auth.username])
 
   function stopPreview() {
     setPreviewStream((s) => {

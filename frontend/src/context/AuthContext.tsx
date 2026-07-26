@@ -22,6 +22,8 @@ type AuthState = {
   ready: boolean
   authenticated: boolean
   username: string | null
+  /** Given name / display name for rooms (not login). */
+  displayName: string | null
   token: string | undefined
   login: (redirectUri?: string) => Promise<void>
   logout: () => Promise<void>
@@ -34,10 +36,21 @@ function readKeycloakUsername(): string | null {
   return keycloak?.tokenParsed?.preferred_username?.toString() ?? null
 }
 
+function readKeycloakDisplayName(): string | null {
+  const t = keycloak?.tokenParsed
+  if (!t) return null
+  const given = t.given_name?.toString().trim()
+  if (given) return given
+  const full = t.name?.toString().trim()
+  if (full) return full
+  return null
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(!keycloakEnabled)
   const [authenticated, setAuthenticated] = useState(false)
   const [username, setUsername] = useState<string | null>(null)
+  const [displayName, setDisplayName] = useState<string | null>(null)
   const [token, setToken] = useState<string | undefined>(undefined)
 
   useEffect(() => {
@@ -50,11 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       keycloak.onAuthSuccess = () => {
         setAuthenticated(true)
         setUsername(readKeycloakUsername())
+        setDisplayName(readKeycloakDisplayName())
         setToken(getAccessToken())
       }
       keycloak.onAuthLogout = () => {
         setAuthenticated(false)
         setUsername(null)
+        setDisplayName(null)
         setToken(undefined)
       }
     }
@@ -63,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((ok) => {
         setAuthenticated(ok)
         setUsername(readKeycloakUsername())
+        setDisplayName(readKeycloakDisplayName())
         setToken(getAccessToken())
       })
       .finally(() => setReady(true))
@@ -76,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await keycloakLogout()
     setAuthenticated(false)
     setUsername(null)
+    setDisplayName(null)
     setToken(undefined)
   }, [])
 
@@ -89,12 +106,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ready,
       authenticated,
       username,
+      displayName,
       token,
       login: handleLogin,
       logout: handleLogout,
       register: handleRegister,
     }),
-    [ready, authenticated, username, token, handleLogin, handleLogout, handleRegister],
+    [ready, authenticated, username, displayName, token, handleLogin, handleLogout, handleRegister],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

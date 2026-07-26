@@ -222,17 +222,6 @@ export function AccountPage() {
           <section>
             <SectionLabel>Смена пароля</SectionLabel>
             <div style={sectionStyle}>
-              <p
-                style={{
-                  margin: '0 0 16px',
-                  fontFamily: 'Outfit, sans-serif',
-                  fontSize: 14,
-                  color: 'var(--voco-text-muted)',
-                  lineHeight: 1.5,
-                }}
-              >
-                Пароль меняется на странице Keycloak: текущий → новый → подтверждение.
-              </p>
               {passwordOk && <StatusMessage type="success">{passwordOk}</StatusMessage>}
               <PrimaryButton type="button" loading={passwordBusy} onClick={() => void onChangePassword()}>
                 {passwordBusy ? 'Перехожу…' : 'Сменить пароль'}
