@@ -14,6 +14,7 @@ import (
 	"voco/internal/api/http/middlewares"
 	"voco/internal/pkg/auth"
 	"voco/internal/pkg/logger"
+	"voco/internal/pkg/migrate"
 	roomsuc "voco/internal/usecase/rooms"
 )
 
@@ -31,6 +32,13 @@ func (a *App) Run() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	// До коннекта приложения: DSN с search_path=voco ещё невалиден, пока нет schema.
+	if err := migrate.UpEmbedded(a.cfg.Pg.MigrateDSN()); err != nil {
+		log.Error("migrate failed", "error", err)
+		return err
+	}
+	log.Info("migrate ok")
 
 	db, err := pgadapter.New(ctx, a.cfg.Pg)
 	if err != nil {

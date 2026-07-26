@@ -7,6 +7,9 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
+
+	"voco/migrations"
 )
 
 func New(databaseURL, migrationsPath string) (*migrate.Migrate, error) {
@@ -14,6 +17,31 @@ func New(databaseURL, migrationsPath string) (*migrate.Migrate, error) {
 		fmt.Sprintf("file://%s", migrationsPath),
 		databaseURL,
 	)
+}
+
+// NewFromFS создаёт migrator из SQL, вшитых в бинарь (go:embed).
+func NewFromFS(databaseURL string) (*migrate.Migrate, error) {
+	source, err := iofs.New(migrations.FS, ".")
+	if err != nil {
+		return nil, fmt.Errorf("migrate source: %w", err)
+	}
+	m, err := migrate.NewWithSourceInstance("iofs", source, databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("migrate init: %w", err)
+	}
+	return m, nil
+}
+
+// UpEmbedded накатывает все неприменённые миграции из embed.
+func UpEmbedded(databaseURL string) error {
+	m, err := NewFromFS(databaseURL)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_, _ = m.Close()
+	}()
+	return Up(m)
 }
 
 func Up(m *migrate.Migrate) error {

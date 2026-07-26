@@ -5,6 +5,9 @@ metadata:
   namespace: voco
 spec:
   replicas: 1
+  # Single replica + migrations on startup.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: voco-backend

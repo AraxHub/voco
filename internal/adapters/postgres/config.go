@@ -48,3 +48,17 @@ func (c Config) DSN() string {
 
 	return u.String()
 }
+
+// MigrateDSN — DSN без search_path: миграция 000001 создаёт schema voco,
+// подключаться с search_path=voco до её применения нельзя.
+func (c Config) MigrateDSN() string {
+	raw := c.DSN()
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	q := u.Query()
+	q.Del("search_path")
+	u.RawQuery = q.Encode()
+	return u.String()
+}

@@ -6,6 +6,9 @@ import (
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/golang-migrate/migrate/v4"
+
 	"voco/internal/app"
 	migrator "voco/internal/pkg/migrate"
 )
@@ -25,10 +28,16 @@ func main() {
 		log.Fatal("VOCO_PG_URL (or VOCO_PG_HOST/...) is required")
 	}
 
-	migrationsPath := flag.String("path", cfg.Pg.MigrationsPath, "path to SQL migrations directory")
+	migrationsPath := flag.String("path", "", "optional path to SQL migrations (default: embedded)")
 	flag.Parse()
 
-	m, err := migrator.New(cfg.Pg.DSN(), *migrationsPath)
+	dsn := cfg.Pg.MigrateDSN()
+	var m *migrate.Migrate
+	if *migrationsPath != "" {
+		m, err = migrator.New(dsn, *migrationsPath)
+	} else {
+		m, err = migrator.NewFromFS(dsn)
+	}
 	if err != nil {
 		log.Fatalf("migrate init: %v", err)
 	}
