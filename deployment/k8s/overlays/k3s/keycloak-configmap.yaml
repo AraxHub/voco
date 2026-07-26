@@ -5,20 +5,18 @@ metadata:
   namespace: voco
 data:
   # Public / non-secret Keycloak + SMTP settings.
-  # Passwords and API keys: Secret keycloak-secrets (via create-secrets.sh).
+  # Passwords: Secret keycloak-secrets (create-secrets.sh).
+  # KC_DB_URL задаётся в patch-keycloak-env.yaml через status.hostIP.
 
-  KC_HTTP_ENABLED: "true"
   KC_HOSTNAME: "auth.voco-online.ru"
   KC_HOSTNAME_STRICT: "false"
   KC_HEALTH_ENABLED: "true"
 
-  # DB connection (password from keycloak-secrets.KC_DB_PASSWORD)
   KC_DB: "postgres"
-  KC_DB_URL: "jdbc:postgresql://postgres:5432/voco?currentSchema=keycloak"
   KC_DB_USERNAME: "voco"
   KC_DB_SCHEMA: "keycloak"
 
-  # SMTP — Resend (or any SMTP). Password: keycloak-secrets.KC_SMTP_PASSWORD
+  # SMTP — Resend (или другой). Password: keycloak-secrets.KC_SMTP_PASSWORD
   KC_SMTP_HOST: "smtp.resend.com"
   KC_SMTP_PORT: "587"
   KC_SMTP_FROM: "noreply@voco-online.ru"
@@ -27,7 +25,6 @@ data:
   KC_SMTP_SSL: "false"
   KC_SMTP_STARTTLS: "true"
 
-  # Realm / client (must match backend + frontend)
   KC_REALM: "voco"
   KC_CLIENT_ID: "voco-frontend"
   KC_FRONTEND_URL: "https://www.voco-online.ru"

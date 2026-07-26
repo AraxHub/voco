@@ -36,4 +36,17 @@ docker build -t voco-frontend:local -f deployment/k8s/images/frontend/Dockerfile
   --build-arg "VITE_KEYCLOAK_CLIENT_ID=${VITE_KEYCLOAK_CLIENT_ID}" \
   .
 
+echo "Building Keycloak image..."
+docker build -t voco-keycloak:local -f deployment/k8s/images/keycloak/Dockerfile .
+
+if command -v k3s >/dev/null 2>&1; then
+  echo "Importing images into k3s containerd..."
+  docker save voco-backend:local voco-frontend:local voco-keycloak:local | sudo k3s ctr images import -
+else
+  echo "WARN: k3s not found — skipped containerd import." >&2
+fi
+
 echo "Done."
+echo "If deployments already exist with :local tag:"
+echo "  kubectl -n voco delete pod -l app=voco-backend,app=voco-frontend"
+echo "  kubectl -n voco rollout restart deploy/keycloak"

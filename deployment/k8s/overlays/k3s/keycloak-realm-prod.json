@@ -1,0 +1,60 @@
+{
+  "realm": "voco",
+  "displayName": "VOCO",
+  "enabled": true,
+  "loginTheme": "voco",
+  "accountTheme": "voco",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["en", "ru"],
+  "defaultLocale": "ru",
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "verifyEmail": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "clients": [
+    {
+      "clientId": "voco-frontend",
+      "name": "VOCO Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "rootUrl": "https://www.voco-online.ru",
+      "baseUrl": "/",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "fullScopeAllowed": true,
+      "redirectUris": [
+        "https://www.voco-online.ru/*"
+      ],
+      "webOrigins": [
+        "https://www.voco-online.ru",
+        "+"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email",
+        "account"
+      ]
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "room-owner",
+        "description": "Can create and manage rooms"
+      }
+    ]
+  }
+}

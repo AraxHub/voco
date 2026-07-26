@@ -11,13 +11,17 @@ resources:
   - base/backend/service.yaml
   - base/livekit/deployment.yaml
   - base/livekit/service.yaml
+  - base/keycloak/deployment.yaml
+  - base/keycloak/service.yaml
   - base/ingress.yaml
   - ingress-livekit-wss.yaml
+  - ingress-keycloak.yaml
   - backend-configmap.yaml
   - keycloak-configmap.yaml
   - livekit-configmap.yaml
 
 patches:
   - path: patch-backend-env.yaml
+  - path: patch-keycloak-env.yaml
   - path: patch-livekit-service-nodeport.yaml
   - path: patch-livekit-service-udp-nodeport.yaml

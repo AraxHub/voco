@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: voco
+spec:
+  template:
+    spec:
+      containers:
+        - name: keycloak
+          envFrom:
+            - configMapRef:
+                name: keycloak-env
+            - secretRef:
+                name: keycloak-secrets
+          env:
+            # Shared Postgres on VPS host (docker), same as Roadmap.
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://$(NODE_IP):5432/voco?currentSchema=keycloak"
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_DB_PASSWORD
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_BOOTSTRAP_ADMIN_USERNAME
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_BOOTSTRAP_ADMIN_PASSWORD
+            # Behind ingress-nginx
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
+            - name: KC_HTTP_ENABLED
+              value: "true"
