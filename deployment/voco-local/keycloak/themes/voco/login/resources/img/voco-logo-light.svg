@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="48" viewBox="0 0 180 48" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="180" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1a1f28"/>
+      <stop offset="0.42" stop-color="#e85a00"/>
+      <stop offset="0.72" stop-color="#ff7a1a"/>
+      <stop offset="1" stop-color="#ffb070"/>
+    </linearGradient>
+  </defs>
+  <text x="90" y="34" text-anchor="middle" font-family="Syncopate, Outfit, system-ui, sans-serif" font-size="30" font-weight="700" letter-spacing="6" fill="url(#g)">VOCO</text>
+</svg>

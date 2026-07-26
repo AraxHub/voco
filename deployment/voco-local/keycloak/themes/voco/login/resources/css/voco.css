@@ -1,9 +1,38 @@
-/* VOCO login — Aurora Circuit (match frontend) */
+/* VOCO login — sync with frontend light/dark themes */
 
 :root,
 html.login-pf,
+[data-theme='light'] {
+  color-scheme: light;
+  --voco-bg-0: #f5f6f8;
+  --voco-bg-1: #ffffff;
+  --voco-card: rgba(255, 255, 255, 0.92);
+  --voco-border: rgba(13, 17, 23, 0.16);
+  --voco-text: #0d1117;
+  --voco-muted: #3d4654;
+  --voco-accent: #e85a00;
+  --voco-accent-2: #ff7a1a;
+  --voco-gold: #ffb070;
+  --voco-btn-fg: #1a0a00;
+  --voco-input-bg: #ffffff;
+  --voco-input-border: rgba(13, 17, 23, 0.18);
+  --voco-danger: #c62828;
+  --voco-logo: url('../img/voco-logo-light.svg');
+  --pf-v5-global--BackgroundColor--100: #f5f6f8 !important;
+  --pf-v5-global--BackgroundColor--200: #ffffff !important;
+  --pf-v5-global--Color--100: #0d1117 !important;
+  --pf-v5-global--Color--200: #3d4654 !important;
+  --pf-v5-global--primary-color--100: #e85a00 !important;
+  --pf-v5-c-form-control--Color: #0d1117 !important;
+  --pf-v5-c-form-control--BackgroundColor: #ffffff !important;
+  --pf-v5-c-form__label--Color: #0d1117 !important;
+  --pf-v5-c-title--Color: #0d1117 !important;
+  --pf-v5-c-button--m-primary--Color: #1a0a00 !important;
+}
+
+[data-theme='dark'],
 html.pf-v5-theme-dark {
-  color-scheme: dark !important;
+  color-scheme: dark;
   --voco-bg-0: #080c10;
   --voco-bg-1: #060a0e;
   --voco-card: rgba(12, 20, 30, 0.82);
@@ -13,6 +42,11 @@ html.pf-v5-theme-dark {
   --voco-accent: #1de9b6;
   --voco-accent-2: #00d4ff;
   --voco-gold: #d4a853;
+  --voco-btn-fg: #06121c;
+  --voco-input-bg: rgba(255, 255, 255, 0.04);
+  --voco-input-border: rgba(255, 255, 255, 0.12);
+  --voco-danger: #f4a0a0;
+  --voco-logo: url('../img/voco-logo.svg');
   --pf-v5-global--BackgroundColor--100: #080c10 !important;
   --pf-v5-global--BackgroundColor--200: #0c141c !important;
   --pf-v5-global--Color--100: #e8eef5 !important;
@@ -30,32 +64,62 @@ html.pf-v5-theme-dark {
   50% { transform: translate(3%, -4%) scale(1.06); opacity: 0.85; }
 }
 
-@keyframes voco-aurora-b {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
-  50% { transform: translate(-4%, 3%) scale(1.08); opacity: 0.7; }
-}
-
-@keyframes voco-surge {
-  0% { stroke-dashoffset: 420; opacity: 0; }
-  10% { opacity: 0.9; }
-  75% { opacity: 0.55; }
-  100% { stroke-dashoffset: -60; opacity: 0; }
-}
-
+/* ─── Centered column layout (logo top, form below) ─── */
 html.login-pf,
 html.login-pf body,
 body#keycloak-bg,
 .login-pf body,
-.pf-v5-c-login,
-.pf-v5-c-login__container {
-  background: #080c10 !important;
-  min-height: 100vh;
+.pf-v5-c-login {
+  background: var(--voco-bg-0) !important;
+  min-height: 100vh !important;
   color: var(--voco-text) !important;
   position: relative;
   isolation: isolate;
 }
 
-/* Atmospheric layers behind the login card */
+.pf-v5-c-login {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2rem 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.pf-v5-c-login__container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1.25rem !important;
+  width: 100% !important;
+  max-width: 26rem !important;
+  margin: 0 auto !important;
+  grid-template-areas: none !important;
+  grid-template-columns: none !important;
+  grid-template-rows: none !important;
+}
+
+.pf-v5-c-login__header,
+#kc-header,
+.pf-v5-c-login__main,
+#kc-content,
+.pf-v5-c-login__footer {
+  grid-area: unset !important;
+  width: 100% !important;
+  max-width: 26rem !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+.pf-v5-c-login__header,
+#kc-header {
+  order: -1;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
 html.login-pf body::before,
 body#keycloak-bg::before {
   content: '';
@@ -64,11 +128,10 @@ body#keycloak-bg::before {
   z-index: -2;
   pointer-events: none;
   background:
-    radial-gradient(780px 520px at 12% 12%, rgba(29, 233, 182, 0.14), transparent 68%),
-    radial-gradient(640px 480px at 88% 8%, rgba(0, 212, 255, 0.1), transparent 70%),
-    radial-gradient(520px 380px at 55% 88%, rgba(212, 168, 83, 0.07), transparent 72%),
-    radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(8, 12, 16, 0.55) 100%),
-    linear-gradient(180deg, #080c10 0%, #060a0e 100%);
+    radial-gradient(780px 520px at 12% 12%, color-mix(in srgb, var(--voco-accent) 22%, transparent), transparent 68%),
+    radial-gradient(640px 480px at 88% 8%, color-mix(in srgb, var(--voco-accent-2) 16%, transparent), transparent 70%),
+    radial-gradient(ellipse at 50% 50%, transparent 40%, color-mix(in srgb, var(--voco-bg-0) 55%, transparent) 100%),
+    linear-gradient(180deg, var(--voco-bg-0) 0%, var(--voco-bg-1) 100%);
 }
 
 html.login-pf body::after,
@@ -78,14 +141,13 @@ body#keycloak-bg::after {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0.45;
   background:
-    radial-gradient(280px 180px at 18% 22%, rgba(29, 233, 182, 0.18), transparent 70%),
-    radial-gradient(240px 160px at 82% 30%, rgba(0, 212, 255, 0.14), transparent 70%);
+    radial-gradient(280px 180px at 18% 22%, color-mix(in srgb, var(--voco-accent) 20%, transparent), transparent 70%),
+    radial-gradient(240px 160px at 82% 30%, color-mix(in srgb, var(--voco-accent-2) 14%, transparent), transparent 70%);
   animation: voco-aurora-a 16s ease-in-out infinite;
 }
 
-/* Kill PatternFly light-mode black text on our dark surfaces. */
 html.login-pf body,
 html.login-pf .pf-v5-c-login,
 html.login-pf .pf-v5-c-login__main,
@@ -125,11 +187,15 @@ html.login-pf #kc-attempted-username {
   display: none !important;
 }
 
-#kc-header-wrapper.pf-v5-c-brand {
-  background: url('../img/voco-logo.svg') no-repeat center center !important;
+#kc-header-wrapper,
+#kc-header-wrapper.pf-v5-c-brand,
+.pf-v5-c-login__header .pf-v5-c-brand {
+  background: var(--voco-logo) no-repeat center center !important;
   background-size: contain !important;
   height: 56px !important;
-  margin: 24px auto 8px !important;
+  width: 180px !important;
+  max-width: 100% !important;
+  margin: 0 auto 4px !important;
   font-size: 0 !important;
   color: transparent !important;
   text-indent: -9999px;
@@ -144,8 +210,8 @@ html.login-pf #kc-attempted-username {
   border: 1px solid var(--voco-border) !important;
   border-radius: 20px !important;
   box-shadow:
-    0 4px 48px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+    0 10px 40px rgba(13, 17, 23, 0.1),
+    0 1px 0 rgba(13, 17, 23, 0.04) !important;
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   color: var(--voco-text) !important;
@@ -153,7 +219,14 @@ html.login-pf #kc-attempted-username {
   overflow: hidden;
 }
 
-/* Soft circuit rim on the card */
+[data-theme='dark'] .pf-v5-c-login__main,
+[data-theme='dark'] #kc-content,
+html.pf-v5-theme-dark .pf-v5-c-login__main {
+  box-shadow:
+    0 4px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
 .pf-v5-c-login__main::before {
   content: '';
   position: absolute;
@@ -161,8 +234,8 @@ html.login-pf #kc-attempted-username {
   border-radius: 20px;
   pointer-events: none;
   background:
-    linear-gradient(90deg, transparent, rgba(29, 233, 182, 0.22), transparent) top / 55% 1px no-repeat,
-    linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.16), transparent) right / 1px 40% no-repeat;
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--voco-accent) 35%, transparent), transparent) top / 55% 1px no-repeat,
+    linear-gradient(180deg, transparent, color-mix(in srgb, var(--voco-accent-2) 28%, transparent), transparent) right / 1px 40% no-repeat;
   opacity: 0.85;
 }
 
@@ -177,16 +250,18 @@ input[type='number'],
 input#emailCode,
 input#username,
 input#password,
+input#password-new,
+input#password-confirm,
 input#kc-attempted-username,
 select,
 textarea {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: var(--voco-input-bg) !important;
+  border: 1px solid var(--voco-input-border) !important;
   border-radius: 12px !important;
-  color: #e8eef5 !important;
-  -webkit-text-fill-color: #e8eef5 !important;
-  caret-color: #1de9b6 !important;
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+  color: var(--voco-text) !important;
+  -webkit-text-fill-color: var(--voco-text) !important;
+  caret-color: var(--voco-accent) !important;
+  box-shadow: none !important;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
 }
 
@@ -195,11 +270,9 @@ textarea {
 input[type='text']:focus,
 input[type='password']:focus,
 input[type='email']:focus {
-  background: rgba(29, 233, 182, 0.05) !important;
-  border-color: rgba(29, 233, 182, 0.5) !important;
-  box-shadow:
-    0 0 0 3px rgba(29, 233, 182, 0.1),
-    inset 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+  background: color-mix(in srgb, var(--voco-accent) 6%, var(--voco-input-bg)) !important;
+  border-color: color-mix(in srgb, var(--voco-accent) 70%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--voco-accent) 14%, transparent) !important;
   outline: none !important;
 }
 
@@ -213,8 +286,8 @@ input::placeholder {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #e8eef5 !important;
-  box-shadow: 0 0 0 1000px #0c141c inset !important;
+  -webkit-text-fill-color: var(--voco-text) !important;
+  box-shadow: 0 0 0 1000px var(--voco-input-bg) inset !important;
   transition: background-color 99999s ease-out;
 }
 
@@ -222,8 +295,8 @@ select,
 select option,
 #login-select-toggle,
 #login-select-toggle option {
-  background: #0c141c !important;
-  color: #e8eef5 !important;
+  background: var(--voco-input-bg) !important;
+  color: var(--voco-text) !important;
 }
 
 .pf-v5-c-button.pf-m-primary,
@@ -234,12 +307,12 @@ button.pf-v5-c-button.pf-m-primary,
 .voco-cta,
 #kc-otp-login-form input[name='login'],
 #kc-otp-submit {
-  background: linear-gradient(130deg, #1de9b6 0%, #00c8ef 45%, #c8a248 100%) !important;
+  background: linear-gradient(130deg, #ffffff 0%, #ff8a2b 38%, #e85a00 100%) !important;
   background-size: 200% 200% !important;
   border: none !important;
   border-radius: 9999px !important;
-  color: #06121c !important;
-  -webkit-text-fill-color: #06121c !important;
+  color: var(--voco-btn-fg) !important;
+  -webkit-text-fill-color: var(--voco-btn-fg) !important;
   font-weight: 600 !important;
   letter-spacing: 0.04em !important;
   text-decoration: none !important;
@@ -250,16 +323,22 @@ button.pf-v5-c-button.pf-m-primary,
   width: 100%;
   box-sizing: border-box;
   padding: 0.75rem 1rem !important;
-  box-shadow: 0 0 24px rgba(29, 233, 182, 0.22), 0 6px 28px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 0 32px rgba(232, 90, 0, 0.28), 0 8px 28px rgba(13, 17, 23, 0.1) !important;
   transition: filter 0.15s ease, transform 0.14s ease, box-shadow 0.14s ease !important;
+}
+
+[data-theme='dark'] .pf-v5-c-button.pf-m-primary,
+[data-theme='dark'] #kc-login,
+html.pf-v5-theme-dark .pf-v5-c-button.pf-m-primary,
+html.pf-v5-theme-dark #kc-login {
+  background: linear-gradient(130deg, #1de9b6 0%, #00c8ef 45%, #c8a248 100%) !important;
+  box-shadow: 0 0 24px rgba(29, 233, 182, 0.22), 0 6px 28px rgba(0, 0, 0, 0.35) !important;
 }
 
 .pf-v5-c-button.pf-m-primary:hover,
 .voco-cta:hover,
 #kc-login:hover {
-  filter: brightness(1.06);
-  color: #06121c !important;
-  -webkit-text-fill-color: #06121c !important;
+  filter: brightness(1.04);
   transform: translateY(-1px);
 }
 
@@ -276,28 +355,27 @@ button.pf-v5-c-button.pf-m-primary,
 #kc-otp-login-form input[name='cancel'],
 input.pf-v5-c-button:not(.pf-m-primary),
 button.pf-v5-c-button:not(.pf-m-primary) {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: color-mix(in srgb, var(--voco-text) 4%, transparent) !important;
+  border: 1px solid var(--voco-border) !important;
   border-radius: 9999px !important;
-  color: #c8d8e8 !important;
-  -webkit-text-fill-color: #c8d8e8 !important;
+  color: var(--voco-text) !important;
+  -webkit-text-fill-color: var(--voco-text) !important;
   min-height: 44px;
-  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease !important;
 }
 
 .pf-v5-c-button:not(.pf-m-primary):not(.pf-m-link):hover,
 .voco-btn-secondary:hover {
-  border-color: rgba(29, 233, 182, 0.45) !important;
-  color: #1de9b6 !important;
-  -webkit-text-fill-color: #1de9b6 !important;
-  background: rgba(29, 233, 182, 0.08) !important;
+  border-color: color-mix(in srgb, var(--voco-accent) 55%, transparent) !important;
+  color: var(--voco-accent) !important;
+  -webkit-text-fill-color: var(--voco-accent) !important;
+  background: color-mix(in srgb, var(--voco-accent) 8%, transparent) !important;
 }
 
 a,
 .pf-v5-c-button.pf-m-link,
 #kc-registration a,
 #kc-form-options a {
-  color: var(--voco-accent-2) !important;
+  color: var(--voco-accent) !important;
 }
 
 .pf-v5-c-helper-text,
@@ -340,20 +418,20 @@ div[id^='input-error'] .pf-v5-c-helper-text__item-text,
 div[id^='input-error-container'] .pf-v5-c-helper-text__item-text,
 .pf-m-error > .pf-v5-c-helper-text__item-text,
 .pf-v5-c-helper-text__item.pf-m-error .pf-v5-c-helper-text__item-text {
-  color: #f4a0a0 !important;
-  -webkit-text-fill-color: #f4a0a0 !important;
+  color: var(--voco-danger) !important;
+  -webkit-text-fill-color: var(--voco-danger) !important;
 }
 
 .pf-v5-c-form-control.pf-m-error,
 .pf-v5-c-form-control.pf-m-error input,
 span.pf-v5-c-form-control.pf-m-error {
-  border-color: rgba(220, 80, 80, 0.55) !important;
+  border-color: color-mix(in srgb, var(--voco-danger) 55%, transparent) !important;
 }
 
 .pf-v5-c-form-control__icon.pf-m-status,
 .pf-v5-c-form-control__icon.pf-m-status i,
 .fa-exclamation-circle {
-  color: #f4a0a0 !important;
+  color: var(--voco-danger) !important;
 }
 
 .pf-v5-c-alert,
@@ -362,12 +440,11 @@ span.pf-v5-c-form-control.pf-m-error {
 .pf-v5-c-alert__title,
 .pf-v5-c-alert__description {
   border-radius: 12px !important;
-  color: #ffe0e0 !important;
-  background: rgba(200, 60, 60, 0.12) !important;
-  border: 1px solid rgba(200, 60, 60, 0.3) !important;
+  color: var(--voco-danger) !important;
+  background: color-mix(in srgb, var(--voco-danger) 10%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--voco-danger) 35%, transparent) !important;
 }
 
-/* OTP digit cells */
 .voco-otp-cells {
   display: flex;
   gap: 10px;
@@ -386,19 +463,17 @@ span.pf-v5-c-form-control.pf-m-error {
   font-weight: 700 !important;
   letter-spacing: 0 !important;
   border-radius: 14px !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  color: #e8eef5 !important;
-  -webkit-text-fill-color: #e8eef5 !important;
-  caret-color: #1de9b6 !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+  background: var(--voco-input-bg) !important;
+  border: 1px solid var(--voco-input-border) !important;
+  color: var(--voco-text) !important;
+  -webkit-text-fill-color: var(--voco-text) !important;
+  caret-color: var(--voco-accent) !important;
 }
 
 .voco-otp-cell:focus {
   outline: none !important;
-  background: rgba(29, 233, 182, 0.06) !important;
-  border-color: rgba(29, 233, 182, 0.65) !important;
-  box-shadow: 0 0 0 3px rgba(29, 233, 182, 0.14), 0 0 18px rgba(29, 233, 182, 0.18) !important;
+  border-color: color-mix(in srgb, var(--voco-accent) 70%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--voco-accent) 14%, transparent) !important;
 }
 
 .voco-otp-actions,

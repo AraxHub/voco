@@ -109,12 +109,14 @@ register_required_action "update_user_locale" "Update User Locale"
   && echo "keycloak setup: VERIFY_EMAIL enabled as default action" \
   || echo "keycloak setup: VERIFY_EMAIL update skipped"
 
-# Password reset emails need UPDATE_PASSWORD enabled.
+# Password reset / AIA: enable UPDATE_PASSWORD and raise max auth age
+# so change-password does not force username+password every time.
 /opt/keycloak/bin/kcadm.sh update "authentication/required-actions/UPDATE_PASSWORD" \
   -r "${KC_REALM}" \
   -s enabled=true \
-  -s defaultAction=false >/dev/null 2>&1 \
-  && echo "keycloak setup: UPDATE_PASSWORD enabled" \
+  -s defaultAction=false \
+  -s 'config.max_auth_age=["2592000"]' >/dev/null 2>&1 \
+  && echo "keycloak setup: UPDATE_PASSWORD enabled (max_auth_age=30d)" \
   || echo "keycloak setup: UPDATE_PASSWORD update skipped"
 
 echo "keycloak setup: realm ${KC_REALM} themes + SMTP (${KC_SMTP_HOST}:${KC_SMTP_PORT}) applied"

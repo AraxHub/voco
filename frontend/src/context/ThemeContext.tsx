@@ -33,6 +33,19 @@ function readStoredTheme(): ThemeMode {
 function applyTheme(theme: ThemeMode) {
   document.documentElement.dataset.theme = theme
   document.documentElement.style.colorScheme = theme
+  // Share theme with Keycloak on auth.*.voco-online.ru (and localhost).
+  try {
+    const host = window.location.hostname
+    const domain =
+      host === 'localhost' || host === '127.0.0.1'
+        ? ''
+        : host.endsWith('voco-online.ru')
+          ? '; Domain=.voco-online.ru'
+          : ''
+    document.cookie = `voco_theme=${theme}; Path=/; Max-Age=2592000; SameSite=Lax${domain}`
+  } catch {
+    // ignore
+  }
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

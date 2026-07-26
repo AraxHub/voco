@@ -22,6 +22,27 @@ export function getAccessToken(): string | undefined {
   return keycloak?.token ?? undefined
 }
 
+/** Keep Keycloak login pages in sync with app light/dark theme. */
+function syncThemeCookieForKeycloak() {
+  try {
+    const theme =
+      document.documentElement.dataset.theme === 'light' ||
+      document.documentElement.dataset.theme === 'dark'
+        ? document.documentElement.dataset.theme
+        : 'light'
+    const host = window.location.hostname
+    const domain =
+      host === 'localhost' || host === '127.0.0.1'
+        ? ''
+        : host.endsWith('voco-online.ru')
+          ? '; Domain=.voco-online.ru'
+          : ''
+    document.cookie = `voco_theme=${theme}; Path=/; Max-Age=2592000; SameSite=Lax${domain}`
+  } catch {
+    // ignore
+  }
+}
+
 let initPromise: Promise<boolean> | null = null
 
 function hasOAuthCallback(): boolean {
@@ -82,6 +103,7 @@ export function initKeycloak(): Promise<boolean> {
 
 export async function login(redirectUri?: string): Promise<void> {
   if (!keycloak) return
+  syncThemeCookieForKeycloak()
   // Scopes come from Keycloak default client scopes (profile, email, account, …).
   await keycloak.login(redirectUri ? { redirectUri } : undefined)
 }
@@ -93,12 +115,20 @@ export async function logout(): Promise<void> {
 
 export async function register(redirectUri?: string): Promise<void> {
   if (!keycloak) return
+  syncThemeCookieForKeycloak()
   await keycloak.register(redirectUri ? { redirectUri } : undefined)
 }
 
 /** Password change via Keycloak AIA (Account REST /credentials/password was removed). */
 export async function changePassword(redirectUri?: string): Promise<void> {
   if (!keycloak) return
+  syncThemeCookieForKeycloak()
+  // Refresh token first so the browser SSO session is more likely still warm.
+  try {
+    await keycloak.updateToken(-1)
+  } catch {
+    // ignore — login() below will re-auth if needed
+  }
   await keycloak.login({
     action: 'UPDATE_PASSWORD',
     redirectUri: redirectUri ?? `${window.location.origin}/account`,
