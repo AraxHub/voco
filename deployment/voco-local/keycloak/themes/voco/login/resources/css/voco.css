@@ -1,80 +1,56 @@
-/* VOCO login — sync with frontend light/dark themes */
+/* VOCO login — light by default; dark only when data-theme=dark (cookie from app). */
 
 :root,
 html.login-pf,
-[data-theme='light'] {
-  color-scheme: light;
+html[data-theme='light'],
+html:not([data-theme='dark']) {
+  color-scheme: light !important;
   --voco-bg-0: #f5f6f8;
   --voco-bg-1: #ffffff;
-  --voco-card: rgba(255, 255, 255, 0.92);
+  --voco-card: #ffffff;
   --voco-border: rgba(13, 17, 23, 0.16);
   --voco-text: #0d1117;
   --voco-muted: #3d4654;
   --voco-accent: #e85a00;
   --voco-accent-2: #ff7a1a;
-  --voco-gold: #ffb070;
   --voco-btn-fg: #1a0a00;
   --voco-input-bg: #ffffff;
   --voco-input-border: rgba(13, 17, 23, 0.18);
   --voco-danger: #c62828;
   --voco-logo: url('../img/voco-logo-light.svg');
-  --pf-v5-global--BackgroundColor--100: #f5f6f8 !important;
-  --pf-v5-global--BackgroundColor--200: #ffffff !important;
-  --pf-v5-global--Color--100: #0d1117 !important;
-  --pf-v5-global--Color--200: #3d4654 !important;
-  --pf-v5-global--primary-color--100: #e85a00 !important;
-  --pf-v5-c-form-control--Color: #0d1117 !important;
-  --pf-v5-c-form-control--BackgroundColor: #ffffff !important;
-  --pf-v5-c-form__label--Color: #0d1117 !important;
-  --pf-v5-c-title--Color: #0d1117 !important;
-  --pf-v5-c-button--m-primary--Color: #1a0a00 !important;
+  --voco-card-shadow: 0 10px 40px rgba(13, 17, 23, 0.1), 0 1px 0 rgba(13, 17, 23, 0.04);
+  --voco-btn-grad: linear-gradient(130deg, #ffffff 0%, #ff8a2b 38%, #e85a00 100%);
+  --voco-btn-glow: 0 0 32px rgba(232, 90, 0, 0.28), 0 8px 28px rgba(13, 17, 23, 0.1);
 }
 
-[data-theme='dark'],
-html.pf-v5-theme-dark {
-  color-scheme: dark;
+html[data-theme='dark'] {
+  color-scheme: dark !important;
   --voco-bg-0: #080c10;
   --voco-bg-1: #060a0e;
-  --voco-card: rgba(12, 20, 30, 0.82);
+  --voco-card: rgba(12, 20, 30, 0.92);
   --voco-border: rgba(255, 255, 255, 0.1);
   --voco-text: #e8eef5;
   --voco-muted: rgba(200, 220, 230, 0.62);
   --voco-accent: #1de9b6;
   --voco-accent-2: #00d4ff;
-  --voco-gold: #d4a853;
   --voco-btn-fg: #06121c;
   --voco-input-bg: rgba(255, 255, 255, 0.04);
   --voco-input-border: rgba(255, 255, 255, 0.12);
   --voco-danger: #f4a0a0;
   --voco-logo: url('../img/voco-logo.svg');
-  --pf-v5-global--BackgroundColor--100: #080c10 !important;
-  --pf-v5-global--BackgroundColor--200: #0c141c !important;
-  --pf-v5-global--Color--100: #e8eef5 !important;
-  --pf-v5-global--Color--200: rgba(200, 220, 230, 0.72) !important;
-  --pf-v5-global--primary-color--100: #1de9b6 !important;
-  --pf-v5-c-form-control--Color: #e8eef5 !important;
-  --pf-v5-c-form-control--BackgroundColor: rgba(255, 255, 255, 0.05) !important;
-  --pf-v5-c-form__label--Color: #e8eef5 !important;
-  --pf-v5-c-title--Color: #e8eef5 !important;
-  --pf-v5-c-button--m-primary--Color: #06121c !important;
+  --voco-card-shadow: 0 4px 48px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --voco-btn-grad: linear-gradient(130deg, #1de9b6 0%, #00c8ef 45%, #c8a248 100%);
+  --voco-btn-glow: 0 0 24px rgba(29, 233, 182, 0.22), 0 6px 28px rgba(0, 0, 0, 0.35);
 }
 
-@keyframes voco-aurora-a {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.55; }
-  50% { transform: translate(3%, -4%) scale(1.06); opacity: 0.85; }
-}
-
-/* ─── Centered column layout (logo top, form below) ─── */
-html.login-pf,
+/* ─── Force stacked centered layout (kill PatternFly side-by-side grid) ─── */
 html.login-pf body,
 body#keycloak-bg,
-.login-pf body,
 .pf-v5-c-login {
   background: var(--voco-bg-0) !important;
   min-height: 100vh !important;
   color: var(--voco-text) !important;
-  position: relative;
-  isolation: isolate;
+  margin: 0 !important;
 }
 
 .pf-v5-c-login {
@@ -85,7 +61,8 @@ body#keycloak-bg,
   box-sizing: border-box !important;
 }
 
-.pf-v5-c-login__container {
+.pf-v5-c-login__container,
+div.pf-v5-c-login__container {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -94,95 +71,94 @@ body#keycloak-bg,
   width: 100% !important;
   max-width: 26rem !important;
   margin: 0 auto !important;
-  grid-template-areas: none !important;
+  padding: 0 !important;
   grid-template-columns: none !important;
   grid-template-rows: none !important;
+  grid-template-areas: none !important;
+  column-gap: 0 !important;
+  row-gap: 1.25rem !important;
 }
 
-.pf-v5-c-login__header,
 #kc-header,
+header.pf-v5-c-login__header,
+.pf-v5-c-login__header,
+main.pf-v5-c-login__main,
 .pf-v5-c-login__main,
-#kc-content,
 .pf-v5-c-login__footer {
   grid-area: unset !important;
+  grid-row: unset !important;
+  grid-column: unset !important;
   width: 100% !important;
   max-width: 26rem !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  margin: 0 auto !important;
+  justify-self: center !important;
+  align-self: center !important;
 }
 
-.pf-v5-c-login__header,
-#kc-header {
-  order: -1;
+#kc-header,
+header.pf-v5-c-login__header,
+.pf-v5-c-login__header {
+  order: -1 !important;
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
   text-align: center !important;
-}
-
-html.login-pf body::before,
-body#keycloak-bg::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background:
-    radial-gradient(780px 520px at 12% 12%, color-mix(in srgb, var(--voco-accent) 22%, transparent), transparent 68%),
-    radial-gradient(640px 480px at 88% 8%, color-mix(in srgb, var(--voco-accent-2) 16%, transparent), transparent 70%),
-    radial-gradient(ellipse at 50% 50%, transparent 40%, color-mix(in srgb, var(--voco-bg-0) 55%, transparent) 100%),
-    linear-gradient(180deg, var(--voco-bg-0) 0%, var(--voco-bg-1) 100%);
-}
-
-html.login-pf body::after,
-body#keycloak-bg::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.45;
-  background:
-    radial-gradient(280px 180px at 18% 22%, color-mix(in srgb, var(--voco-accent) 20%, transparent), transparent 70%),
-    radial-gradient(240px 160px at 82% 30%, color-mix(in srgb, var(--voco-accent-2) 14%, transparent), transparent 70%);
-  animation: voco-aurora-a 16s ease-in-out infinite;
-}
-
-html.login-pf body,
-html.login-pf .pf-v5-c-login,
-html.login-pf .pf-v5-c-login__main,
-html.login-pf .pf-v5-c-login__main-header,
-html.login-pf .pf-v5-c-login__main-body,
-html.login-pf .pf-v5-c-title,
-html.login-pf .pf-v5-c-form,
-html.login-pf .pf-v5-c-form__label,
-html.login-pf .pf-v5-c-form__label-text,
-html.login-pf label,
-html.login-pf p,
-html.login-pf li,
-html.login-pf span:not(.pf-v5-c-form-control__toggle-icon):not(.pf-v5-svg):not(.pf-v5-c-helper-text__item-text):not(.kc-feedback-text):not([id^='input-error']),
-html.login-pf strong,
-html.login-pf b,
-html.login-pf h1,
-html.login-pf h2,
-html.login-pf h3,
-html.login-pf .instruction,
-html.login-pf #kc-page-title,
-html.login-pf #kc-content-wrapper,
-html.login-pf #kc-info-message,
-html.login-pf #kc-attempted-username {
-  color: var(--voco-text) !important;
-}
-
-#kc-header,
-#kc-header-wrapper,
-.pf-v5-c-brand,
-.pf-v5-c-login__header {
+  padding: 0 !important;
+  margin: 0 0 0.25rem !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }
 
+@media (min-width: 768px) {
+  .pf-v5-c-login__container,
+  div.pf-v5-c-login__container {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    grid-template-areas: none !important;
+    max-width: 26rem !important;
+  }
+
+  #kc-header,
+  header.pf-v5-c-login__header,
+  .pf-v5-c-login__header,
+  main.pf-v5-c-login__main,
+  .pf-v5-c-login__main {
+    grid-area: unset !important;
+    max-width: 26rem !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .pf-v5-c-login__container,
+  div.pf-v5-c-login__container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    grid-template-columns: none !important;
+    grid-template-areas: none !important;
+    max-width: 26rem !important;
+    width: 100% !important;
+  }
+
+  #kc-header,
+  header.pf-v5-c-login__header,
+  .pf-v5-c-login__header {
+    grid-area: unset !important;
+    position: static !important;
+    order: -1 !important;
+    margin: 0 auto 0.25rem !important;
+  }
+
+  main.pf-v5-c-login__main,
+  .pf-v5-c-login__main {
+    grid-area: unset !important;
+    max-width: 26rem !important;
+  }
+}
+
+/* Logo */
 .kc-logo-text {
   display: none !important;
 }
@@ -195,64 +171,63 @@ html.login-pf #kc-attempted-username {
   height: 56px !important;
   width: 180px !important;
   max-width: 100% !important;
-  margin: 0 auto 4px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
   font-size: 0 !important;
+  line-height: 0 !important;
   color: transparent !important;
-  text-indent: -9999px;
-  overflow: hidden;
+  text-indent: -9999px !important;
+  overflow: hidden !important;
+}
+
+html.login-pf body::before,
+body#keycloak-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(780px 520px at 12% 12%, color-mix(in srgb, var(--voco-accent) 18%, transparent), transparent 68%),
+    radial-gradient(640px 480px at 88% 8%, color-mix(in srgb, var(--voco-accent-2) 14%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--voco-bg-0) 0%, var(--voco-bg-1) 100%);
+}
+
+html.login-pf body,
+html.login-pf .pf-v5-c-login,
+html.login-pf .pf-v5-c-login__main,
+html.login-pf .pf-v5-c-title,
+html.login-pf .pf-v5-c-form__label,
+html.login-pf .pf-v5-c-form__label-text,
+html.login-pf label,
+html.login-pf p,
+html.login-pf h1,
+html.login-pf #kc-page-title,
+html.login-pf .pf-v5-c-check__label {
+  color: var(--voco-text) !important;
 }
 
 .pf-v5-c-login__main,
 #kc-content,
-.card-pf,
-.login-pf-page .card-pf {
+.card-pf {
   background: var(--voco-card) !important;
   border: 1px solid var(--voco-border) !important;
   border-radius: 20px !important;
-  box-shadow:
-    0 10px 40px rgba(13, 17, 23, 0.1),
-    0 1px 0 rgba(13, 17, 23, 0.04) !important;
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  box-shadow: var(--voco-card-shadow) !important;
   color: var(--voco-text) !important;
   position: relative;
   overflow: hidden;
 }
 
-[data-theme='dark'] .pf-v5-c-login__main,
-[data-theme='dark'] #kc-content,
-html.pf-v5-theme-dark .pf-v5-c-login__main {
-  box-shadow:
-    0 4px 48px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-}
-
-.pf-v5-c-login__main::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 20px;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, transparent, color-mix(in srgb, var(--voco-accent) 35%, transparent), transparent) top / 55% 1px no-repeat,
-    linear-gradient(180deg, transparent, color-mix(in srgb, var(--voco-accent-2) 28%, transparent), transparent) right / 1px 40% no-repeat;
-  opacity: 0.85;
-}
-
 .pf-v5-c-form-control,
 .pf-v5-c-form-control input,
-.pf-v5-c-form-control.pf-m-readonly,
-.pf-v5-c-form-control.pf-m-readonly input,
 input[type='text'],
 input[type='password'],
 input[type='email'],
-input[type='number'],
-input#emailCode,
 input#username,
 input#password,
 input#password-new,
 input#password-confirm,
-input#kc-attempted-username,
 select,
 textarea {
   background: var(--voco-input-bg) !important;
@@ -261,114 +236,38 @@ textarea {
   color: var(--voco-text) !important;
   -webkit-text-fill-color: var(--voco-text) !important;
   caret-color: var(--voco-accent) !important;
-  box-shadow: none !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
 }
 
 .pf-v5-c-form-control:focus-within,
-.pf-v5-c-form-control input:focus,
-input[type='text']:focus,
-input[type='password']:focus,
-input[type='email']:focus {
-  background: color-mix(in srgb, var(--voco-accent) 6%, var(--voco-input-bg)) !important;
+input:focus {
   border-color: color-mix(in srgb, var(--voco-accent) 70%, transparent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--voco-accent) 14%, transparent) !important;
   outline: none !important;
 }
 
-.pf-v5-c-form-control::placeholder,
-input::placeholder {
-  color: var(--voco-muted) !important;
-  -webkit-text-fill-color: var(--voco-muted) !important;
-  opacity: 1 !important;
-}
-
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--voco-text) !important;
-  box-shadow: 0 0 0 1000px var(--voco-input-bg) inset !important;
-  transition: background-color 99999s ease-out;
-}
-
-select,
-select option,
-#login-select-toggle,
-#login-select-toggle option {
-  background: var(--voco-input-bg) !important;
-  color: var(--voco-text) !important;
-}
-
 .pf-v5-c-button.pf-m-primary,
 #kc-login,
 input.pf-v5-c-button.pf-m-primary,
-button.pf-v5-c-button.pf-m-primary,
-.btn-primary,
-.voco-cta,
-#kc-otp-login-form input[name='login'],
-#kc-otp-submit {
-  background: linear-gradient(130deg, #ffffff 0%, #ff8a2b 38%, #e85a00 100%) !important;
-  background-size: 200% 200% !important;
+button.pf-v5-c-button.pf-m-primary {
+  background: var(--voco-btn-grad) !important;
   border: none !important;
   border-radius: 9999px !important;
   color: var(--voco-btn-fg) !important;
   -webkit-text-fill-color: var(--voco-btn-fg) !important;
   font-weight: 600 !important;
-  letter-spacing: 0.04em !important;
-  text-decoration: none !important;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
   min-height: 48px;
   width: 100%;
-  box-sizing: border-box;
-  padding: 0.75rem 1rem !important;
-  box-shadow: 0 0 32px rgba(232, 90, 0, 0.28), 0 8px 28px rgba(13, 17, 23, 0.1) !important;
-  transition: filter 0.15s ease, transform 0.14s ease, box-shadow 0.14s ease !important;
-}
-
-[data-theme='dark'] .pf-v5-c-button.pf-m-primary,
-[data-theme='dark'] #kc-login,
-html.pf-v5-theme-dark .pf-v5-c-button.pf-m-primary,
-html.pf-v5-theme-dark #kc-login {
-  background: linear-gradient(130deg, #1de9b6 0%, #00c8ef 45%, #c8a248 100%) !important;
-  box-shadow: 0 0 24px rgba(29, 233, 182, 0.22), 0 6px 28px rgba(0, 0, 0, 0.35) !important;
-}
-
-.pf-v5-c-button.pf-m-primary:hover,
-.voco-cta:hover,
-#kc-login:hover {
-  filter: brightness(1.04);
-  transform: translateY(-1px);
-}
-
-.pf-v5-c-button.pf-m-primary:active,
-#kc-login:active {
-  transform: scale(0.985) translateY(1px);
+  box-shadow: var(--voco-btn-glow) !important;
 }
 
 .pf-v5-c-button:not(.pf-m-primary):not(.pf-m-link),
 .pf-v5-c-button.pf-m-secondary,
-.pf-v5-c-button.pf-m-control,
-.voco-btn-secondary,
-#kc-otp-login-form input[name='resend'],
-#kc-otp-login-form input[name='cancel'],
-input.pf-v5-c-button:not(.pf-m-primary),
-button.pf-v5-c-button:not(.pf-m-primary) {
+.pf-v5-c-button.pf-m-control {
   background: color-mix(in srgb, var(--voco-text) 4%, transparent) !important;
   border: 1px solid var(--voco-border) !important;
   border-radius: 9999px !important;
   color: var(--voco-text) !important;
   -webkit-text-fill-color: var(--voco-text) !important;
-  min-height: 44px;
-}
-
-.pf-v5-c-button:not(.pf-m-primary):not(.pf-m-link):hover,
-.voco-btn-secondary:hover {
-  border-color: color-mix(in srgb, var(--voco-accent) 55%, transparent) !important;
-  color: var(--voco-accent) !important;
-  -webkit-text-fill-color: var(--voco-accent) !important;
-  background: color-mix(in srgb, var(--voco-accent) 8%, transparent) !important;
 }
 
 a,
@@ -379,104 +278,18 @@ a,
 }
 
 .pf-v5-c-helper-text,
-.pf-v5-c-form__helper-text,
-#kc-info-wrapper,
-.login-pf-signup,
 .instruction,
-.voco-info-text,
-.voco-otp-hint {
+#kc-info-wrapper,
+.login-pf-signup {
   color: var(--voco-muted) !important;
 }
 
-.voco-info-text strong,
-.voco-otp-hint strong,
-#kc-otp-login-form label strong {
-  color: var(--voco-accent) !important;
-}
-
-.voco-info-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 4px 0 8px;
-}
-
-.voco-info-secondary {
-  margin-top: 4px;
-  font-size: 0.95rem;
-}
-
-.voco-otp-error,
-#input-error-otp-code,
-.pf-v5-c-form__helper-text.pf-m-error,
-.pf-v5-c-helper-text.pf-m-error,
-.pf-v5-c-helper-text__item.pf-m-error,
-.pf-v5-c-helper-text__item-text.pf-m-error,
+.pf-m-error,
 .kc-feedback-text,
-span[id^='input-error'],
-div[id^='input-error'] .pf-v5-c-helper-text__item-text,
-div[id^='input-error-container'] .pf-v5-c-helper-text__item-text,
-.pf-m-error > .pf-v5-c-helper-text__item-text,
-.pf-v5-c-helper-text__item.pf-m-error .pf-v5-c-helper-text__item-text {
-  color: var(--voco-danger) !important;
-  -webkit-text-fill-color: var(--voco-danger) !important;
-}
-
-.pf-v5-c-form-control.pf-m-error,
-.pf-v5-c-form-control.pf-m-error input,
-span.pf-v5-c-form-control.pf-m-error {
-  border-color: color-mix(in srgb, var(--voco-danger) 55%, transparent) !important;
-}
-
-.pf-v5-c-form-control__icon.pf-m-status,
-.pf-v5-c-form-control__icon.pf-m-status i,
-.fa-exclamation-circle {
+span[id^='input-error'] {
   color: var(--voco-danger) !important;
 }
 
-.pf-v5-c-alert,
-.alert-error,
-.pf-m-danger,
-.pf-v5-c-alert__title,
-.pf-v5-c-alert__description {
-  border-radius: 12px !important;
-  color: var(--voco-danger) !important;
-  background: color-mix(in srgb, var(--voco-danger) 10%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--voco-danger) 35%, transparent) !important;
-}
-
-.voco-otp-cells {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin: 8px 0 4px;
-  flex-wrap: nowrap;
-}
-
-.voco-otp-cell {
-  width: 52px !important;
-  height: 64px !important;
-  min-width: 44px;
-  padding: 0 !important;
-  text-align: center !important;
-  font-size: 1.75rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0 !important;
-  border-radius: 14px !important;
-  background: var(--voco-input-bg) !important;
-  border: 1px solid var(--voco-input-border) !important;
-  color: var(--voco-text) !important;
-  -webkit-text-fill-color: var(--voco-text) !important;
-  caret-color: var(--voco-accent) !important;
-}
-
-.voco-otp-cell:focus {
-  outline: none !important;
-  border-color: color-mix(in srgb, var(--voco-accent) 70%, transparent) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--voco-accent) 14%, transparent) !important;
-}
-
-.voco-otp-actions,
 #kc-form-buttons {
   display: flex;
   flex-direction: column;
@@ -484,34 +297,28 @@ span.pf-v5-c-form-control.pf-m-error {
   margin-top: 12px;
 }
 
-#kc-locale,
-#kc-locale-dropdown,
-.pf-v5-c-login__main-header-utilities {
-  color: var(--voco-muted) !important;
+.voco-otp-cells {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 8px 0 4px;
 }
 
-.pf-v5-c-form-control__toggle-icon svg,
-.pf-v5-svg {
-  fill: var(--voco-muted) !important;
-  color: var(--voco-muted) !important;
+.voco-otp-cell {
+  width: 52px !important;
+  height: 64px !important;
+  text-align: center !important;
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  border-radius: 14px !important;
+  background: var(--voco-input-bg) !important;
+  border: 1px solid var(--voco-input-border) !important;
+  color: var(--voco-text) !important;
 }
 
-@media (max-width: 420px) {
-  .voco-otp-cells {
-    gap: 6px;
-  }
-
-  .voco-otp-cell {
-    width: 42px !important;
-    height: 54px !important;
-    font-size: 1.4rem !important;
-    border-radius: 12px !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.login-pf body::after,
-  body#keycloak-bg::after {
-    animation: none !important;
-  }
+.voco-info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0 8px;
 }
