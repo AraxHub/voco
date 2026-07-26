@@ -134,3 +134,18 @@ export async function changePassword(redirectUri?: string): Promise<void> {
     redirectUri: redirectUri ?? `${window.location.origin}/account`,
   })
 }
+
+/** Email change via Keycloak AIA — sends verification to the new address. */
+export async function changeEmail(redirectUri?: string): Promise<void> {
+  if (!keycloak) return
+  syncThemeCookieForKeycloak()
+  try {
+    await keycloak.updateToken(-1)
+  } catch {
+    // ignore
+  }
+  await keycloak.login({
+    action: 'UPDATE_EMAIL',
+    redirectUri: redirectUri ?? `${window.location.origin}/account`,
+  })
+}

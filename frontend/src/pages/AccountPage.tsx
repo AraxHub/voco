@@ -1,7 +1,7 @@
 import { Link, Navigate } from 'react-router-dom'
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { changePassword } from '../lib/keycloak'
+import { changeEmail, changePassword } from '../lib/keycloak'
 import {
   fetchAccount,
   updateAccount,
@@ -17,24 +17,40 @@ export function AccountPage() {
   const [profile, setProfile] = useState<AccountProfile | null>(null)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [email, setEmail] = useState('')
 
   const [loading, setLoading] = useState(true)
   const [profileBusy, setProfileBusy] = useState(false)
   const [passwordBusy, setPasswordBusy] = useState(false)
+  const [emailBusy, setEmailBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profileOk, setProfileOk] = useState<string | null>(null)
   const [passwordOk, setPasswordOk] = useState<string | null>(null)
+  const [emailOk, setEmailOk] = useState<string | null>(null)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
     const status = params.get('kc_action_status') ?? hashParams.get('kc_action_status')
+    const action = params.get('kc_action') ?? hashParams.get('kc_action')
     if (status === 'success') {
-      setPasswordOk('Пароль успешно изменён.')
+      if (action === 'UPDATE_EMAIL') {
+        setEmailOk('Email обновлён. Проверь новое письмо, если Keycloak запросил подтверждение.')
+        void auth.refreshProfile()
+        void fetchAccount()
+          .then((data) => {
+            setProfile(data)
+          })
+          .catch(() => {
+            /* ignore */
+          })
+      } else {
+        setPasswordOk('Пароль успешно изменён.')
+      }
     } else if (status === 'cancelled') {
-      setError('Смена пароля отменена.')
+      setError(action === 'UPDATE_EMAIL' ? 'Смена email отменена.' : 'Смена пароля отменена.')
     }
+    // auth.refreshProfile is stable enough; avoid re-running on every auth change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -51,7 +67,6 @@ export function AccountPage() {
         setProfile(data)
         setFirstName(data.firstName ?? '')
         setLastName(data.lastName ?? '')
-        setEmail(data.email ?? '')
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Не удалось загрузить профиль')
@@ -85,7 +100,8 @@ export function AccountPage() {
         username: profile?.username,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        email: email.trim(),
+        // Email меняется только через UPDATE_EMAIL AIA (письмо на новый адрес).
+        email: profile?.email,
       }
       await updateAccount(next)
       await auth.refreshProfile()
@@ -107,6 +123,18 @@ export function AccountPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось открыть смену пароля')
       setPasswordBusy(false)
+    }
+  }
+
+  async function onChangeEmail() {
+    setEmailBusy(true)
+    setError(null)
+    setEmailOk(null)
+    try {
+      await changeEmail(`${window.location.origin}/account`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось открыть смену email')
+      setEmailBusy(false)
     }
   }
 
@@ -202,20 +230,47 @@ export function AccountPage() {
                 />
               </div>
 
-              <GlassInput
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-              />
-
               {profileOk && <StatusMessage type="success">{profileOk}</StatusMessage>}
 
               <PrimaryButton type="submit" loading={profileBusy}>
                 {profileBusy ? 'Сохраняю…' : 'Сохранить профиль'}
               </PrimaryButton>
             </form>
+          </section>
+
+          <section style={{ marginBottom: 40 }}>
+            <SectionLabel>Email</SectionLabel>
+            <div style={sectionStyle}>
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  background: 'var(--voco-chip-bg)',
+                  border: '1px solid var(--voco-border-soft)',
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: 'Outfit, sans-serif',
+                    fontSize: 11,
+                    color: 'var(--voco-text-faint)',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    margin: '0 0 4px',
+                  }}
+                >
+                  Текущий email
+                </p>
+                <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: 14, color: 'var(--voco-text-muted)', margin: 0 }}>
+                  {profile?.email ?? '—'}
+                  {profile?.emailVerified === false ? ' (не подтверждён)' : ''}
+                </p>
+              </div>
+              {emailOk && <StatusMessage type="success">{emailOk}</StatusMessage>}
+              <PrimaryButton type="button" loading={emailBusy} onClick={() => void onChangeEmail()}>
+                {emailBusy ? 'Перехожу…' : 'Сменить email'}
+              </PrimaryButton>
+            </div>
           </section>
 
           <section>

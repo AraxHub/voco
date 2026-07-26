@@ -119,6 +119,15 @@ register_required_action "update_user_locale" "Update User Locale"
   && echo "keycloak setup: UPDATE_PASSWORD enabled (max_auth_age=30d)" \
   || echo "keycloak setup: UPDATE_PASSWORD update skipped"
 
+# Email change AIA: verification mail goes to the NEW address (realm verifyEmail=true).
+/opt/keycloak/bin/kcadm.sh update "authentication/required-actions/UPDATE_EMAIL" \
+  -r "${KC_REALM}" \
+  -s enabled=true \
+  -s defaultAction=false \
+  -s 'config.max_auth_age=["2592000"]' >/dev/null 2>&1 \
+  && echo "keycloak setup: UPDATE_EMAIL enabled (max_auth_age=30d)" \
+  || echo "keycloak setup: UPDATE_EMAIL update skipped"
+
 echo "keycloak setup: realm ${KC_REALM} themes + SMTP (${KC_SMTP_HOST}:${KC_SMTP_PORT}) applied"
 
 # --- Email OTP 2FA (mesutpiskin email-authenticator SPI) ---
