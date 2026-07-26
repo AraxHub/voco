@@ -41,3 +41,6 @@ spec:
               value: "xforwarded"
             - name: KC_HTTP_ENABLED
               value: "true"
+            # hostname already in ConfigMap; do not set build-time opts that break --optimized
+            - name: KC_HEALTH_ENABLED
+              value: "true"

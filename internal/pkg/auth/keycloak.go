@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 )
@@ -29,9 +30,22 @@ func New(ctx context.Context, cfg Config) (*Service, error) {
 	if issuer == "" {
 		return nil, fmt.Errorf("keycloak: URL is required when ENABLED=true")
 	}
-	provider, err := oidc.NewProvider(ctx, issuer)
-	if err != nil {
-		return nil, fmt.Errorf("keycloak provider: %w", err)
+
+	var provider *oidc.Provider
+	var lastErr error
+	for attempt := 1; attempt <= 30; attempt++ {
+		provider, lastErr = oidc.NewProvider(ctx, issuer)
+		if lastErr == nil {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("keycloak provider: %w", ctx.Err())
+		case <-time.After(2 * time.Second):
+		}
+	}
+	if lastErr != nil {
+		return nil, fmt.Errorf("keycloak provider: %w", lastErr)
 	}
 
 	return &Service{

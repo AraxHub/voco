@@ -6,6 +6,9 @@ set -euo pipefail
 #   cp deployment/k3s/secrets.env.example deployment/k3s/secrets.env
 #   edit deployment/k3s/secrets.env  # fill CHANGE_ME values
 #   ./deployment/k3s/create-secrets.sh
+#
+# Values may contain & ? # — file is parsed as KEY=VALUE lines (not `source`),
+# so VOCO_PG_URL does not need shell quoting (quoting still OK).
 
 ENV_FILE=${ENV_FILE:-deployment/k3s/secrets.env}
 
@@ -15,10 +18,21 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-set -a
-# shellcheck disable=SC1090
-source "$ENV_FILE"
-set +a
+# Safe KEY=VALUE loader (handles & in URLs; strips optional surrounding quotes).
+while IFS= read -r line || [[ -n "$line" ]]; do
+  [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+  if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
+    key="${BASH_REMATCH[1]}"
+    val="${BASH_REMATCH[2]}"
+    if [[ "$val" =~ ^\"(.*)\"$ ]]; then
+      val="${BASH_REMATCH[1]}"
+    elif [[ "$val" =~ ^\'(.*)\'$ ]]; then
+      val="${BASH_REMATCH[1]}"
+    fi
+    printf -v "$key" '%s' "$val"
+    export "$key"
+  fi
+done < "$ENV_FILE"
 
 require() {
   local name="$1"
@@ -41,14 +55,12 @@ KC_SMTP_USER="${KC_SMTP_USER:-resend}"
 
 kubectl create namespace voco --dry-run=client -o yaml | kubectl apply -f -
 
-# Backend + LiveKit credentials
 kubectl -n voco create secret generic voco-secrets \
   --from-literal=VOCO_LIVEKIT_API_KEY="${VOCO_LIVEKIT_API_KEY}" \
   --from-literal=VOCO_LIVEKIT_API_SECRET="${VOCO_LIVEKIT_API_SECRET}" \
   --from-literal=VOCO_PG_URL="${VOCO_PG_URL}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-# Keycloak admin / DB / SMTP (for Keycloak Deployment / realm-setup Job)
 kubectl -n voco create secret generic keycloak-secrets \
   --from-literal=KC_BOOTSTRAP_ADMIN_USERNAME="${KC_BOOTSTRAP_ADMIN_USERNAME}" \
   --from-literal=KC_BOOTSTRAP_ADMIN_PASSWORD="${KC_BOOTSTRAP_ADMIN_PASSWORD}" \

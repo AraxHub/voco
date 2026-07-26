@@ -12,12 +12,15 @@ COPY --from=provider /tmp/keycloak-2fa-email-authenticator.jar \
 COPY deployment/voco-local/keycloak/themes/ /opt/keycloak/themes/
 COPY deployment/k8s/overlays/k3s/keycloak-realm-prod.json /opt/keycloak/data/import/voco-realm.json
 
-RUN /opt/keycloak/bin/kc.sh build --db=postgres
-
+# Build-time options must match runtime when using --optimized.
+# health-enabled is build-time; set before build.
 ENV KC_HEALTH_ENABLED=true
-ENV KC_HTTP_ENABLED=true
+ENV KC_DB=postgres
+
+RUN /opt/keycloak/bin/kc.sh build --db=postgres --health-enabled=true
 
 EXPOSE 8080 9000
 
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start", "--optimized", "--import-realm"]
+# Without --optimized first bring-up is more reliable behind ingress / varying env.
+CMD ["start", "--import-realm"]
