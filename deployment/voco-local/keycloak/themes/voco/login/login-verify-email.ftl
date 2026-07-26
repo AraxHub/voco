@@ -11,9 +11,6 @@
                     ${msg("emailVerifyInstruction4",user.email)}
                 </#if>
             </p>
-            <p class="instruction voco-info-text">
-                ${msg("emailVerifyMailpitHint")}
-            </p>
 
             <#if isAppInitiatedAction??>
                 <form id="kc-verify-email-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">

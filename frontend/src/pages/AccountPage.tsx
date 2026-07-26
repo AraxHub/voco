@@ -7,7 +7,7 @@ import {
   updateAccount,
   type AccountProfile,
 } from '../lib/keycloakAccount'
-import { PrimaryButton, NavButton } from '../ui/Button'
+import { PrimaryButton, DangerButton } from '../ui/Button'
 import { StatusMessage } from '../ui/Card'
 import { GlassInput } from '../ui/Input'
 
@@ -165,7 +165,6 @@ export function AccountPage() {
         <Link to="/" className="voco-nav-btn">
           ← На главную
         </Link>
-        <NavButton onClick={() => void auth.logout()}>Выйти</NavButton>
       </div>
 
       <h1
@@ -273,13 +272,22 @@ export function AccountPage() {
             </div>
           </section>
 
-          <section>
+          <section style={{ marginBottom: 40 }}>
             <SectionLabel>Смена пароля</SectionLabel>
             <div style={sectionStyle}>
               {passwordOk && <StatusMessage type="success">{passwordOk}</StatusMessage>}
               <PrimaryButton type="button" loading={passwordBusy} onClick={() => void onChangePassword()}>
                 {passwordBusy ? 'Перехожу…' : 'Сменить пароль'}
               </PrimaryButton>
+            </div>
+          </section>
+
+          <section>
+            <SectionLabel>Сессия</SectionLabel>
+            <div style={sectionStyle}>
+              <DangerButton type="button" fullWidth onClick={() => void auth.logout()}>
+                Выйти
+              </DangerButton>
             </div>
           </section>
         </>
