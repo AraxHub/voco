@@ -69,20 +69,6 @@ export async function updateAccount(profile: AccountProfile): Promise<void> {
   })
 }
 
-export async function changePassword(
-  currentPassword: string,
-  newPassword: string,
-): Promise<void> {
-  await accountRequest('/credentials/password', {
-    method: 'POST',
-    body: JSON.stringify({
-      currentPassword,
-      newPassword,
-      confirmation: newPassword,
-    }),
-  })
-}
-
 export async function refreshKeycloakToken(): Promise<void> {
   if (!keycloak?.authenticated) return
   await keycloak.updateToken(30)

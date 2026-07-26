@@ -1,8 +1,8 @@
 import { Link, Navigate } from 'react-router-dom'
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { changePassword } from '../lib/keycloak'
 import {
-  changePassword,
   fetchAccount,
   refreshKeycloakToken,
   updateAccount,
@@ -20,16 +20,23 @@ export function AccountPage() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
 
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-
   const [loading, setLoading] = useState(true)
   const [profileBusy, setProfileBusy] = useState(false)
   const [passwordBusy, setPasswordBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profileOk, setProfileOk] = useState<string | null>(null)
   const [passwordOk, setPasswordOk] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const status = params.get('kc_action_status') ?? hashParams.get('kc_action_status')
+    if (status === 'success') {
+      setPasswordOk('Пароль успешно изменён.')
+    } else if (status === 'cancelled') {
+      setError('Смена пароля отменена.')
+    }
+  }, [])
 
   useEffect(() => {
     if (!auth.enabled || !auth.ready || !auth.authenticated) {
@@ -92,33 +99,14 @@ export function AccountPage() {
     }
   }
 
-  async function onChangePassword(e: FormEvent) {
-    e.preventDefault()
+  async function onChangePassword() {
     setPasswordBusy(true)
     setError(null)
     setPasswordOk(null)
-
-    if (newPassword !== confirmPassword) {
-      setError('Пароли не совпадают')
-      setPasswordBusy(false)
-      return
-    }
-
-    if (newPassword.length < 8) {
-      setError('Пароль должен содержать минимум 8 символов')
-      setPasswordBusy(false)
-      return
-    }
-
     try {
-      await changePassword(currentPassword, newPassword)
-      setCurrentPassword('')
-      setNewPassword('')
-      setConfirmPassword('')
-      setPasswordOk('Пароль успешно изменён.')
+      await changePassword(`${window.location.origin}/account`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сменить пароль')
-    } finally {
+      setError(err instanceof Error ? err.message : 'Не удалось открыть смену пароля')
       setPasswordBusy(false)
     }
   }
@@ -233,35 +221,23 @@ export function AccountPage() {
 
           <section>
             <SectionLabel>Смена пароля</SectionLabel>
-            <form style={sectionStyle} onSubmit={onChangePassword}>
-              <GlassInput
-                label="Текущий пароль"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-              <GlassInput
-                label="Новый пароль"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-              <GlassInput
-                label="Подтвердите пароль"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-              />
-
+            <div style={sectionStyle}>
+              <p
+                style={{
+                  margin: '0 0 16px',
+                  fontFamily: 'Outfit, sans-serif',
+                  fontSize: 14,
+                  color: 'var(--voco-text-muted)',
+                  lineHeight: 1.5,
+                }}
+              >
+                Пароль меняется на странице Keycloak: текущий → новый → подтверждение.
+              </p>
               {passwordOk && <StatusMessage type="success">{passwordOk}</StatusMessage>}
-
-              <PrimaryButton type="submit" loading={passwordBusy}>
-                {passwordBusy ? 'Обновляю…' : 'Сменить пароль'}
+              <PrimaryButton type="button" loading={passwordBusy} onClick={() => void onChangePassword()}>
+                {passwordBusy ? 'Перехожу…' : 'Сменить пароль'}
               </PrimaryButton>
-            </form>
+            </div>
           </section>
         </>
       )}

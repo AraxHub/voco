@@ -95,3 +95,12 @@ export async function register(redirectUri?: string): Promise<void> {
   if (!keycloak) return
   await keycloak.register(redirectUri ? { redirectUri } : undefined)
 }
+
+/** Password change via Keycloak AIA (Account REST /credentials/password was removed). */
+export async function changePassword(redirectUri?: string): Promise<void> {
+  if (!keycloak) return
+  await keycloak.login({
+    action: 'UPDATE_PASSWORD',
+    redirectUri: redirectUri ?? `${window.location.origin}/account`,
+  })
+}
