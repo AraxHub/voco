@@ -17,7 +17,25 @@ spec:
     - host: auth.voco-online.ru
       http:
         paths:
-          - path: /
+          # Public OIDC / login / themes only.
+          # /admin is intentionally NOT published — use port-forward from the VPS:
+          #   kubectl -n voco port-forward svc/keycloak 8080:8080
+          #   then open http://127.0.0.1:8080/admin  (via SSH -L if from your laptop)
+          - path: /realms
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+          - path: /resources
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak
+                port:
+                  number: 8080
+          - path: /js
             pathType: Prefix
             backend:
               service:
