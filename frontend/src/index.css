@@ -201,12 +201,18 @@
   70% { transform: translate(-3%, 5%) scale(0.94); opacity: 0.22; }
 }
 
-.aurora-1 { animation: aurora-1 18s ease-in-out infinite; }
-.aurora-2 { animation: aurora-2 23s ease-in-out infinite; }
-.aurora-3 { animation: aurora-3 16s ease-in-out infinite; }
-.aurora-4 { animation: aurora-4 20s ease-in-out infinite; }
-.sheen-loop { animation: sheen-slide 4.5s ease-in-out infinite; }
-.gradient-breathe { animation: gradient-pos 6s ease infinite; background-size: 200% 200%; }
+.aurora-1,
+.aurora-2,
+.aurora-3,
+.aurora-4,
+.sheen-loop,
+.gradient-breathe,
+.bg-surge,
+.surge-bloom {
+  /* Default: no continuous motion. Enabled only under [data-fx='fancy']. */
+  animation: none;
+}
+
 .fade-in-up { animation: fade-in-up 0.5s ease both; }
 .toast-in { animation: toast-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .drawer-in { animation: drawer-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -214,7 +220,58 @@
 .bg-surge {
   stroke-dasharray: 28 480;
   stroke-dashoffset: 520;
+}
+
+.mineral-card {
+  /* Opaque enough via --voco-card; blur is expensive on weak GPUs. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.gradient-breathe {
+  background-size: 100% 100%;
+}
+
+html[data-fx='fancy'] .aurora-1 { animation: aurora-1 18s ease-in-out infinite; }
+html[data-fx='fancy'] .aurora-2 { animation: aurora-2 23s ease-in-out infinite; }
+html[data-fx='fancy'] .aurora-3 { animation: aurora-3 16s ease-in-out infinite; }
+html[data-fx='fancy'] .aurora-4 { animation: aurora-4 20s ease-in-out infinite; }
+html[data-fx='fancy'] .sheen-loop { animation: sheen-slide 4.5s ease-in-out infinite; }
+html[data-fx='fancy'] .gradient-breathe {
+  animation: gradient-pos 6s ease infinite;
+  background-size: 200% 200%;
+}
+html[data-fx='fancy'] .bg-surge {
   animation: bg-surge-run 7.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+html[data-fx='fancy'] .surge-bloom {
+  animation: surge-bloom-drift 14s ease-in-out infinite;
+}
+html[data-fx='fancy'] .mineral-card {
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-1,
+  .aurora-2,
+  .aurora-3,
+  .aurora-4,
+  .sheen-loop,
+  .gradient-breathe,
+  .bg-surge,
+  .surge-bloom,
+  .fade-in-up,
+  .toast-in,
+  .drawer-in {
+    animation: none !important;
+  }
+
+  .bg-surge {
+    opacity: 0.25;
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
 }
 
 .bg-surge--1 { animation-duration: 8.2s; animation-delay: 0s; }
@@ -231,6 +288,11 @@
 
 .voco-bg__blob {
   filter: blur(90px);
+}
+
+.voco-bg__blob--static {
+  /* Softness comes from the radial gradient stop; blur is the GPU killer. */
+  filter: none !important;
 }
 
 .voco-bg__blob--1 {
@@ -447,23 +509,4 @@ body {
   place-items: center;
   color: var(--voco-text-muted);
   letter-spacing: 0.08em;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aurora-1,
-  .aurora-2,
-  .aurora-3,
-  .aurora-4,
-  .sheen-loop,
-  .gradient-breathe,
-  .bg-surge,
-  .surge-bloom {
-    animation: none !important;
-  }
-
-  .bg-surge {
-    opacity: 0.25;
-    stroke-dasharray: none;
-    stroke-dashoffset: 0;
-  }
 }

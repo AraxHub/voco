@@ -18,11 +18,9 @@ export function MineralCard({
 }: MineralCardProps) {
   return (
     <div
-      className={`relative ${className}`}
+      className={`mineral-card relative ${className}`}
       style={{
         background: 'var(--voco-card)',
-        backdropFilter: 'blur(28px)',
-        WebkitBackdropFilter: 'blur(28px)',
         border: '1px solid var(--voco-border)',
         borderRadius: 20,
         boxShadow: 'var(--voco-shadow), inset 0 1px 0 rgba(255,255,255,0.08)',

@@ -108,6 +108,10 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  animation: none;
+}
+
+html[data-fx='fancy'] .home__hero {
   animation: homeShimmer 3.4s ease-in-out infinite;
 }
 
@@ -148,9 +152,13 @@
   border-radius: 16px;
   padding: 18px;
   background: rgba(10, 10, 18, 0.40);
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
   box-shadow: rgba(0, 0, 0, 0.55) 0 24px 50px -30px;
   text-align: left;
+}
+
+html[data-fx='fancy'] .card {
+  backdrop-filter: blur(12px);
 }
 
 .card__title {

@@ -23,13 +23,12 @@ export function PrimaryButton({ children, loading, fullWidth, disabled, classNam
       {...props}
       disabled={disabled || loading}
       onPointerDown={handlePress}
-      className={`relative overflow-hidden select-none outline-none ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={`gradient-breathe relative overflow-hidden select-none outline-none ${fullWidth ? 'w-full' : ''} ${className}`}
       style={{
         padding: '14px 36px',
         borderRadius: 9999,
         background: 'var(--voco-primary-grad)',
         backgroundSize: '200% 200%',
-        animation: 'gradient-pos 6s ease infinite',
         color: 'var(--voco-btn-fg)',
         fontFamily: 'Outfit, sans-serif',
         fontWeight: 600,

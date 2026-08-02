@@ -52,7 +52,6 @@ export function GlassInput({ label, error, className = '', ...props }: InputProp
             boxShadow: focused
               ? '0 0 0 3px color-mix(in srgb, var(--voco-accent) 12%, transparent), inset 0 1px 4px rgba(0,0,0,0.08)'
               : 'inset 0 1px 4px rgba(0,0,0,0.06)',
-            backdropFilter: 'blur(12px)',
             ...props.style,
           }}
         />

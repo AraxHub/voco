@@ -1,4 +1,51 @@
-export default function Background() {
+import { useFancyEffectsAttr } from '../hooks/useFancyEffects'
+
+/** Cheap static wash — radial gradients, no filter:blur, no animation. */
+function LiteBackground() {
+  return (
+    <div className="voco-bg fixed inset-0 overflow-hidden" style={{ zIndex: 0 }} aria-hidden>
+      <div className="voco-bg__blob voco-bg__blob--1 voco-bg__blob--static absolute rounded-full pointer-events-none" />
+      <div className="voco-bg__blob voco-bg__blob--2 voco-bg__blob--static absolute rounded-full pointer-events-none" />
+      <div className="voco-bg__vignette absolute inset-0 pointer-events-none" />
+      <svg
+        className="absolute inset-0 h-full w-full pointer-events-none"
+        viewBox="0 0 1440 900"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="railA" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="var(--voco-rail-a-dim)" />
+            <stop offset="50%" stopColor="var(--voco-rail-a)" />
+            <stop offset="100%" stopColor="var(--voco-rail-a-dim)" />
+          </linearGradient>
+          <linearGradient id="railB" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="var(--voco-rail-b-dim)" />
+            <stop offset="50%" stopColor="var(--voco-rail-b)" />
+            <stop offset="100%" stopColor="var(--voco-rail-b-dim)" />
+          </linearGradient>
+          <linearGradient id="railC" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="var(--voco-rail-c-dim)" />
+            <stop offset="50%" stopColor="var(--voco-rail-c)" />
+            <stop offset="100%" stopColor="var(--voco-rail-c-dim)" />
+          </linearGradient>
+        </defs>
+        <g strokeWidth="1" fill="none" opacity="0.28">
+          <path d="M60 110 H380 L430 160 H620" stroke="url(#railA)" />
+          <path d="M430 160 V280 L510 360 H740" stroke="url(#railA)" />
+          <path d="M980 95 H1280 L1340 155 V290" stroke="url(#railB)" />
+          <path d="M1120 155 H1380" stroke="url(#railB)" />
+          <path d="M80 720 H320 L390 650 H560 L620 710 H860" stroke="url(#railC)" />
+          <path d="M1050 780 H1320 L1380 720 V580" stroke="url(#railB)" />
+          <path d="M700 40 V140 L780 220 H980" stroke="url(#railA)" />
+          <path d="M40 420 H180 L240 480 H420" stroke="url(#railB)" />
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+function FancyBackground() {
   return (
     <div className="voco-bg fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
       <div className="aurora-1 voco-bg__blob voco-bg__blob--1 absolute rounded-full pointer-events-none" />
@@ -13,7 +60,7 @@ export default function Background() {
       <div className="voco-bg__vignette absolute inset-0 pointer-events-none" />
 
       <svg
-        className="absolute inset-0 h-full w-full pointer-events-none"
+        className="voco-bg__fx absolute inset-0 h-full w-full pointer-events-none"
         viewBox="0 0 1440 900"
         preserveAspectRatio="xMidYMid slice"
         aria-hidden
@@ -66,4 +113,9 @@ export default function Background() {
       </svg>
     </div>
   )
+}
+
+export default function Background() {
+  const fancy = useFancyEffectsAttr()
+  return fancy ? <FancyBackground /> : <LiteBackground />
 }

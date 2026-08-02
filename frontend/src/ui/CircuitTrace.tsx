@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useFancyEffects } from '../hooks/useFancyEffects'
 
 interface CircuitCornersProps {
   armLength?: number
@@ -16,6 +17,7 @@ export function CircuitCorners({
   interval = 4200,
   className = '',
 }: CircuitCornersProps) {
+  const fancy = useFancyEffects()
   const [running, setRunning] = useState(active)
   const a = Math.min(armLength, 24)
 
@@ -24,12 +26,15 @@ export function CircuitCorners({
       setRunning(true)
       return
     }
+    // Idle PCB pulses only on capable desktops — interval re-renders heat weak GPUs.
+    if (!fancy) return
+
     const id = setInterval(() => {
       setRunning(true)
       setTimeout(() => setRunning(false), 1400)
     }, interval + Math.random() * 2000)
     return () => clearInterval(id)
-  }, [active, interval])
+  }, [active, interval, fancy])
 
   const corners = [
     `M 0,${a} L 0,0 L ${a},0`,
