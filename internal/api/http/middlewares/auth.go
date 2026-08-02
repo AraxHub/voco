@@ -38,6 +38,28 @@ func Auth(svc *auth.Service) gin.HandlerFunc {
 	}
 }
 
+func AuthOptional(svc *auth.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if svc == nil || !svc.Enabled() {
+			c.Next()
+			return
+		}
+		header := strings.TrimSpace(c.GetHeader("Authorization"))
+		if !strings.HasPrefix(header, "Bearer ") {
+			c.Next()
+			return
+		}
+		raw := strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))
+		user, err := svc.Verify(c.Request.Context(), raw)
+		if err != nil {
+			c.Next()
+			return
+		}
+		c.Set(string(UserContextKey), user)
+		c.Next()
+	}
+}
+
 func UserFromContext(c *gin.Context) (auth.User, bool) {
 	v, ok := c.Get(string(UserContextKey))
 	if !ok {

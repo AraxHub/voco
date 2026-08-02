@@ -3,9 +3,12 @@ package app
 import (
 	"log"
 	"os"
+	"time"
+
+	"voco/internal/adapters/keycloak"
 	"voco/internal/adapters/livekit"
-	"voco/internal/adapters/memory"
 	"voco/internal/adapters/postgres"
+	"voco/internal/adapters/webpush"
 	"voco/internal/api/http"
 	"voco/internal/pkg/auth"
 	"voco/internal/pkg/logger"
@@ -16,14 +19,24 @@ import (
 
 const AppName = "VOCO"
 
+type FeaturesConfig struct {
+	UserSyncInterval time.Duration `envconfig:"USER_SYNC_INTERVAL" default:"15m"`
+	MaxImageBytes    int64         `envconfig:"MAX_IMAGE_BYTES" default:"10485760"`
+	MaxFileBytes     int64         `envconfig:"MAX_FILE_BYTES" default:"26214400"`
+	MaxGroupMembers  int           `envconfig:"MAX_GROUP_MEMBERS" default:"100"`
+	MaxMessageLen    int           `envconfig:"MAX_MESSAGE_LEN" default:"4000"`
+}
+
 type Config struct {
-	Server   http.ServerConfig `envconfig:"server"`
-	Cache    memory.Config     `envconfig:"cache"`
-	LiveKit  livekit.Cfg       `envconfig:"livekit"`
-	Pg       postgres.Config   `envconfig:"pg"`
-	Keycloak auth.Config       `envconfig:"keycloak"`
-	Log      logger.Config     `envconfig:"log"`
-	DevMode  bool              `envconfig:"dev_mode"`
+	Server        http.ServerConfig `envconfig:"server"`
+	LiveKit       livekit.Cfg       `envconfig:"livekit"`
+	Pg            postgres.Config   `envconfig:"pg"`
+	Keycloak      auth.Config       `envconfig:"keycloak"`
+	KeycloakAdmin keycloak.AdminConfig `envconfig:"keycloak_admin"`
+	WebPush       webpush.Config    `envconfig:"webpush"`
+	Features      FeaturesConfig    `envconfig:"features"`
+	Log           logger.Config     `envconfig:"log"`
+	DevMode       bool              `envconfig:"dev_mode"`
 }
 
 func MustLoadCfg(ReleaseMode string) (Config, error) {

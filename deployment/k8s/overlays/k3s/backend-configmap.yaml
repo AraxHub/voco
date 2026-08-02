@@ -31,3 +31,18 @@ data:
   # Pool defaults (optional)
   VOCO_PG_MAX_CONNS: "10"
   VOCO_PG_CONNECT_TIMEOUT: "5s"
+
+  # Features / sync / limits (see docs/)
+  VOCO_FEATURES_USER_SYNC_INTERVAL: "15m"
+  VOCO_FEATURES_MAX_IMAGE_BYTES: "10485760"
+  VOCO_FEATURES_MAX_FILE_BYTES: "26214400"
+
+  # Keycloak Admin API (user directory sync). Credentials live in Secret.
+  VOCO_KEYCLOAK_ADMIN_ENABLED: "true"
+  VOCO_KEYCLOAK_ADMIN_BASE_URL: "http://keycloak:8080"
+  VOCO_KEYCLOAK_ADMIN_REALM: "voco"
+  VOCO_KEYCLOAK_ADMIN_CLIENT_ID: "voco-backend-admin"
+
+  # Web Push — public key in ConfigMap; private in Secret
+  # VOCO_WEBPUSH_VAPID_PUBLIC set via secret preferred; optional here for FE endpoint
+  VOCO_WEBPUSH_VAPID_SUBJECT: "mailto:admin@voco-online.ru"

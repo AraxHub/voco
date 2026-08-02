@@ -12,8 +12,20 @@ func NewRoomID() RoomID {
 	return RoomID(uuid.New())
 }
 
+func ParseRoomID(s string) (RoomID, error) {
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return RoomID{}, err
+	}
+	return RoomID(id), nil
+}
+
 func (id RoomID) String() string {
 	return uuid.UUID(id).String()
+}
+
+func (id RoomID) UUID() uuid.UUID {
+	return uuid.UUID(id)
 }
 
 type RoomStatus string
@@ -32,9 +44,9 @@ const (
 type Room struct {
 	ID RoomID `json:"id"`
 
-	Title  string `json:"title,omitempty"`
-	Owner  string `json:"owner,omitempty"`
-	Status RoomStatus
+	Title  string     `json:"title,omitempty"`
+	Owner  *UserID    `json:"owner,omitempty"`
+	Status RoomStatus `json:"status"`
 
 	JoinPolicy      JoinPolicy `json:"joinPolicy"`
 	MaxParticipants int        `json:"maxParticipants,omitempty"`

@@ -49,6 +49,9 @@ require VOCO_PG_URL
 require KC_BOOTSTRAP_ADMIN_PASSWORD
 require KC_DB_PASSWORD
 require KC_SMTP_PASSWORD
+require VOCO_KEYCLOAK_ADMIN_CLIENT_SECRET
+require VOCO_WEBPUSH_VAPID_PUBLIC
+require VOCO_WEBPUSH_VAPID_PRIVATE
 
 KC_BOOTSTRAP_ADMIN_USERNAME="${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}"
 KC_SMTP_USER="${KC_SMTP_USER:-resend}"
@@ -59,6 +62,9 @@ kubectl -n voco create secret generic voco-secrets \
   --from-literal=VOCO_LIVEKIT_API_KEY="${VOCO_LIVEKIT_API_KEY}" \
   --from-literal=VOCO_LIVEKIT_API_SECRET="${VOCO_LIVEKIT_API_SECRET}" \
   --from-literal=VOCO_PG_URL="${VOCO_PG_URL}" \
+  --from-literal=VOCO_KEYCLOAK_ADMIN_CLIENT_SECRET="${VOCO_KEYCLOAK_ADMIN_CLIENT_SECRET}" \
+  --from-literal=VOCO_WEBPUSH_VAPID_PUBLIC="${VOCO_WEBPUSH_VAPID_PUBLIC}" \
+  --from-literal=VOCO_WEBPUSH_VAPID_PRIVATE="${VOCO_WEBPUSH_VAPID_PRIVATE}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n voco create secret generic keycloak-secrets \

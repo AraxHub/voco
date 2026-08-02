@@ -1,0 +1,137 @@
+.cal {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100svh;
+}
+
+.cal__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cal__views button,
+.cal__dayCell {
+  border: 1px solid var(--voco-border);
+  background: transparent;
+  color: var(--voco-text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.cal__views {
+  display: flex;
+  gap: 6px;
+}
+
+.cal__views .is-active {
+  border-color: color-mix(in srgb, var(--voco-accent) 40%, transparent);
+  color: var(--voco-accent);
+}
+
+.cal__nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cal__create {
+  display: flex;
+  gap: 8px;
+  min-width: min(420px, 100%);
+}
+
+.cal__grid {
+  border: 1px solid var(--voco-border);
+  border-radius: 16px;
+  overflow: auto;
+  max-height: calc(100svh - 140px);
+}
+
+.cal__row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  min-height: 56px;
+  border-bottom: 1px solid color-mix(in srgb, var(--voco-border) 70%, transparent);
+}
+
+.cal__hour {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--voco-text-muted);
+}
+
+.cal__slot {
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cal__event {
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--voco-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--voco-accent) 35%, transparent);
+  cursor: grab;
+}
+
+.cal__event.is-cancelled {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.cal__eventMeta {
+  font-size: 11px;
+  color: var(--voco-text-muted);
+}
+
+.cal__eventActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.cal__eventActions button {
+  font-size: 11px;
+  border: 0;
+  background: transparent;
+  color: var(--voco-accent);
+  cursor: pointer;
+}
+
+.cal__month {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.cal__dayCell {
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.cal__dayCell em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--voco-accent);
+}
+
+.cal__error {
+  color: var(--voco-danger, #ff6b6b);
+}
+
+@media (max-width: 900px) {
+  .cal__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

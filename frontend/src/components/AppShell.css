@@ -1,0 +1,99 @@
+.appShell {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 88px 1fr;
+}
+
+.appShell__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 10px;
+  border-right: 1px solid var(--voco-border);
+  background: color-mix(in srgb, var(--voco-bg) 72%, transparent);
+}
+
+.appShell__brand {
+  font-family: Syncopate, Outfit, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--voco-accent);
+  font-weight: 700;
+}
+
+.appShell__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  flex: 1;
+}
+
+.appShell__link,
+.appShell__bottomLink {
+  text-decoration: none;
+  color: var(--voco-text-muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 10px 6px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.appShell__link.is-active,
+.appShell__bottomLink.is-active {
+  color: var(--voco-accent);
+  border-color: color-mix(in srgb, var(--voco-accent) 35%, transparent);
+  background: color-mix(in srgb, var(--voco-accent) 10%, transparent);
+}
+
+.appShell__avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--voco-accent) 18%, transparent);
+  color: var(--voco-text);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--voco-border);
+}
+
+.appShell__main {
+  min-width: 0;
+  min-height: 100svh;
+}
+
+.appShell__bottom {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .appShell {
+    grid-template-columns: 1fr;
+    padding-bottom: 64px;
+  }
+
+  .appShell__rail {
+    display: none;
+  }
+
+  .appShell__bottom {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 8px;
+    background: color-mix(in srgb, var(--voco-bg) 92%, transparent);
+    border-top: 1px solid var(--voco-border);
+  }
+}

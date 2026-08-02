@@ -7,9 +7,26 @@ import {
   updateAccount,
   type AccountProfile,
 } from '../lib/keycloakAccount'
-import { PrimaryButton, DangerButton } from '../ui/Button'
+import {
+  fetchMe,
+  getPushSettings,
+  getVapidPublicKey,
+  setPushSettings,
+  subscribePush,
+  updateMe,
+} from '../lib/api'
+import { PrimaryButton, DangerButton, GhostButton } from '../ui/Button'
 import { StatusMessage } from '../ui/Card'
 import { GlassInput } from '../ui/Input'
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = atob(base64)
+  const out = new Uint8Array(raw.length)
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i)
+  return out
+}
 
 export function AccountPage() {
   const auth = useAuth()
@@ -17,6 +34,8 @@ export function AccountPage() {
   const [profile, setProfile] = useState<AccountProfile | null>(null)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [nickname, setNickname] = useState('')
+  const [pushEnabled, setPushEnabled] = useState(false)
 
   const [loading, setLoading] = useState(true)
   const [profileBusy, setProfileBusy] = useState(false)
@@ -67,6 +86,18 @@ export function AccountPage() {
         setProfile(data)
         setFirstName(data.firstName ?? '')
         setLastName(data.lastName ?? '')
+        try {
+          const me = await fetchMe()
+          if (!cancelled) setNickname(me.nickname || '')
+        } catch {
+          /* backend may be unavailable */
+        }
+        try {
+          const ps = await getPushSettings()
+          if (!cancelled) setPushEnabled(Boolean(ps.pushEnabled))
+        } catch {
+          /* ignore */
+        }
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Не удалось загрузить профиль')
@@ -104,6 +135,9 @@ export function AccountPage() {
         email: profile?.email,
       }
       await updateAccount(next)
+      if (nickname.trim()) {
+        await updateMe(nickname.trim(), `${firstName} ${lastName}`.trim())
+      }
       await auth.refreshProfile()
       setProfile(next)
       setProfileOk('Профиль успешно сохранён.')
@@ -229,12 +263,64 @@ export function AccountPage() {
                 />
               </div>
 
+              <GlassInput
+                label="Никнейм (поиск в чатах)"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                autoComplete="nickname"
+              />
+
               {profileOk && <StatusMessage type="success">{profileOk}</StatusMessage>}
 
               <PrimaryButton type="submit" loading={profileBusy}>
                 {profileBusy ? 'Сохраняю…' : 'Сохранить профиль'}
               </PrimaryButton>
             </form>
+          </section>
+
+          <section style={{ marginBottom: 40 }}>
+            <SectionLabel>Уведомления</SectionLabel>
+            <div style={sectionStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: 'var(--voco-text)', fontSize: 14 }}>
+                  Browser push: {pushEnabled ? 'вкл' : 'выкл'}
+                </span>
+                <GhostButton
+                  type="button"
+                  onClick={() => {
+                    void (async () => {
+                      try {
+                        const next = !pushEnabled
+                        if (next) {
+                          const perm = await Notification.requestPermission()
+                          if (perm !== 'granted') throw new Error('Разрешение не выдано')
+                          const reg = await navigator.serviceWorker.register('/sw.js')
+                          const { publicKey } = await getVapidPublicKey()
+                          if (!publicKey) throw new Error('VAPID public key не настроен на сервере')
+                          const sub = await reg.pushManager.subscribe({
+                            userVisibleOnly: true,
+                            applicationServerKey: urlBase64ToUint8Array(publicKey),
+                          })
+                          await subscribePush(sub.toJSON())
+                          await setPushSettings(true)
+                          setPushEnabled(true)
+                        } else {
+                          await setPushSettings(false)
+                          setPushEnabled(false)
+                        }
+                      } catch (e) {
+                        setError(e instanceof Error ? e.message : 'Не удалось изменить push')
+                      }
+                    })()
+                  }}
+                >
+                  {pushEnabled ? 'Выключить' : 'Включить'}
+                </GhostButton>
+              </div>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--voco-text-muted)' }}>
+                По умолчанию выключено. In-app toast работает при открытой вкладке через WebSocket.
+              </p>
+            </div>
           </section>
 
           <section style={{ marginBottom: 40 }}>

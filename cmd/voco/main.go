@@ -6,6 +6,13 @@ import (
 	"voco/internal/app"
 )
 
+// @title Voco API
+// @version 1.0
+// @description Rooms, messaging, calendar, push
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	releaseMode := os.Getenv("VOCO_RELEASE_MODE")
 	if releaseMode == "" {

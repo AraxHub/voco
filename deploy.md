@@ -1,60 +1,32 @@
-# Voco — деплой и CI/CD
+# Voco — деплой и CI/CD (кратко)
 
-## Pipeline (GitHub Actions)
+Полное описание фич, Keycloak session, swagger и журнал работ: локально в **`docs/`** (gitignored) → [`docs/README.md`](docs/README.md), [`docs/cicd-deploy.md`](docs/cicd-deploy.md).
 
-Один workflow **Pipeline** (`.github/workflows/pipeline.yml`):
+## Pipeline
 
-```
-Test API ──┐
-Test Frontend ──┴─→ Build & push images ──→ Deploy to VPS
-```
+`.github/workflows/pipeline.yml`: PR → тесты; `main` → GHCR → SSH deploy backend/frontend.
 
-- **PR** — только тесты.
-- **push в `main`** — тесты → GHCR → деплой backend + frontend.
+Образы: `ghcr.io/araxhub/voco-{backend,frontend}:sha-<7>` / `:latest`.
 
-Образы:
+## GitHub Secrets
 
-- `ghcr.io/araxhub/voco-backend:sha-<7>` / `:latest`
-- `ghcr.io/araxhub/voco-frontend:sha-<7>` / `:latest`
+`VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` (+ опционально `VPS_SSH_PORT`).
 
-**Keycloak** и **LiveKit** в CI не входят — как раньше, образы/манифесты на VPS вручную при необходимости.
+## VPS secrets (`deployment/k3s/secrets.env`)
 
-### Secrets в GitHub (репо voco)
-
-Settings → Secrets and variables → Actions — те же, что у roadmap (можно тот же ключ):
-
-| Secret | Значение |
-|--------|----------|
-| `VPS_HOST` | `155.212.190.163` |
-| `VPS_USER` | `root` |
-| `VPS_SSH_KEY` | приватный ключ (`roadmap_deploy` или отдельный) |
-| `VPS_SSH_PORT` | опционально |
-
-### Один раз на VPS
-
-В `~/voco/deployment/k3s/secrets.env` (или как у тебя лежит репо):
+Обязательные: LiveKit keys, `VOCO_PG_URL`, Keycloak SMTP/DB/admin, GHCR pull,  
+**также:** `VOCO_KEYCLOAK_ADMIN_CLIENT_SECRET`, `VOCO_WEBPUSH_VAPID_PUBLIC`, `VOCO_WEBPUSH_VAPID_PRIVATE`.
 
 ```bash
-GHCR_USERNAME=AraxHub
-GHCR_TOKEN=ghp_...   # тот же PAT read:packages, что для roadmap
-```
-
-```bash
-cd ~/voco   # путь к клону на сервере
-git pull
+./deployment/k3s/create-secrets.sh
 ./deployment/k3s/create-ghcr-pull-secret.sh
 ./deployment/k3s/apply.sh
 ```
 
-Дальше push в `main` сам обновляет backend/frontend.
+После деплоя: Keycloak SSO Session Idle = 30 days; admin client `view-users`; VAPID keys.
 
----
-
-## Ручной fallback
+## Fallback
 
 ```bash
-./deployment/k3s/build-images.sh
-./deployment/k3s/apply.sh
-# или только рестарт текущих тегов:
-./deployment/k3s/restart.sh
+./deployment/k3s/build-images.sh && ./deployment/k3s/apply.sh
 ```

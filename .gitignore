@@ -60,3 +60,6 @@ out/
 # Misc
 tmp/
 *.swp
+
+# Local project documentation (not committed)
+docs/
