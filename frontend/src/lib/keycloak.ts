@@ -22,6 +22,28 @@ export function getAccessToken(): string | undefined {
   return keycloak?.token ?? undefined
 }
 
+/** Refresh access token if it expires within `minValidity` seconds. */
+export async function ensureFreshToken(minValidity = 60): Promise<string | undefined> {
+  if (!keycloak?.authenticated) return getAccessToken()
+  try {
+    await keycloak.updateToken(minValidity)
+  } catch {
+    // keep current token; caller may get 401 and retry/login
+  }
+  return getAccessToken()
+}
+
+/** Force-refresh; returns false if session is dead. */
+export async function forceRefreshToken(): Promise<boolean> {
+  if (!keycloak?.authenticated) return false
+  try {
+    await keycloak.updateToken(-1)
+    return Boolean(keycloak.token)
+  } catch {
+    return false
+  }
+}
+
 /** Keep Keycloak login pages in sync with app light/dark theme. */
 function syncThemeCookieForKeycloak() {
   try {

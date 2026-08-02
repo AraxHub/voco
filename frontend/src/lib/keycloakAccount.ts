@@ -1,4 +1,4 @@
-import { getAccessToken, keycloak, keycloakEnabled } from './keycloak'
+import { ensureFreshToken, forceRefreshToken, getAccessToken, keycloak, keycloakEnabled } from './keycloak'
 
 const url = import.meta.env.VITE_KEYCLOAK_URL?.toString().trim() ?? ''
 const realm = import.meta.env.VITE_KEYCLOAK_REALM?.toString().trim() || 'voco'
@@ -15,12 +15,12 @@ function accountBase(): string {
   return `${url.replace(/\/$/, '')}/realms/${realm}/account`
 }
 
-async function accountRequest<T>(path: string, init?: RequestInit): Promise<T> {
+async function accountRequest<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
   if (!keycloakEnabled) {
     throw new Error('Keycloak не настроен')
   }
 
-  const token = getAccessToken()
+  const token = (await ensureFreshToken(60)) || getAccessToken()
   if (!token) {
     throw new Error('Нужно войти в аккаунт')
   }
@@ -35,6 +35,12 @@ async function accountRequest<T>(path: string, init?: RequestInit): Promise<T> {
     },
   })
 
+  if (res.status === 401 && !retried) {
+    if (await forceRefreshToken()) {
+      return accountRequest<T>(path, init, true)
+    }
+  }
+
   if (!res.ok) {
     let message = `${res.status} ${res.statusText}`
     try {
@@ -42,6 +48,9 @@ async function accountRequest<T>(path: string, init?: RequestInit): Promise<T> {
       message = body.errorMessage || body.error || body.message || message
     } catch {
       // ignore
+    }
+    if (res.status === 401 || /invalid token|unauthorized/i.test(message)) {
+      throw new Error('Сессия истекла или токен недействителен. Войдите снова.')
     }
     throw new Error(message)
   }

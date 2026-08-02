@@ -1,3 +1,4 @@
+import { ensureFreshToken, forceRefreshToken } from './keycloak'
 import { getAuthToken } from './session'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL?.toString().trim() || ''
@@ -49,15 +50,35 @@ export type CalendarEvent = {
   RRule?: string
 }
 
-function authHeaders(): HeadersInit {
-  const token = getAuthToken()
-  if (!token) return {}
-  return { Authorization: `Bearer ${token}` }
+function authHeaders(token?: string): HeadersInit {
+  const t = token ?? getAuthToken()
+  if (!t) return {}
+  return { Authorization: `Bearer ${t}` }
 }
 
-async function http<T>(path: string, init?: RequestInit): Promise<T> {
+function authErrorMessage(status: number, raw: string): string {
+  const msg = raw.toLowerCase()
+  if (status === 401 || msg.includes('invalid token') || msg.includes('authorization required') || msg.includes('unauthorized')) {
+    return 'Сессия истекла или токен недействителен. Войдите снова.'
+  }
+  return raw
+}
+
+async function parseError(res: Response): Promise<string> {
+  let message = `${res.status} ${res.statusText}`
+  try {
+    const body = (await res.json()) as { error?: string; message?: string }
+    message = body.error || body.message || message
+  } catch {
+    /* ignore */
+  }
+  return authErrorMessage(res.status, message)
+}
+
+async function http<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
+  const token = await ensureFreshToken(60)
   const headers: HeadersInit = {
-    ...authHeaders(),
+    ...authHeaders(token),
     ...(init?.headers || {}),
   }
   if (!(init?.body instanceof FormData)) {
@@ -65,15 +86,13 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
       (headers as Record<string, string>)['Content-Type'] || 'application/json'
   }
   const res = await fetch(`${API_BASE}${path}`, { ...init, headers })
+  if (res.status === 401 && !retried) {
+    const ok = await forceRefreshToken()
+    if (ok) return http<T>(path, init, true)
+    throw new Error(await parseError(res))
+  }
   if (!res.ok) {
-    let message = `${res.status} ${res.statusText}`
-    try {
-      const body = (await res.json()) as { error?: string; message?: string }
-      message = body.error || body.message || message
-    } catch {
-      /* ignore */
-    }
-    throw new Error(message)
+    throw new Error(await parseError(res))
   }
   if (res.status === 204) return undefined as T
   return (await res.json()) as T

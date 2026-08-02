@@ -156,8 +156,12 @@ export function ChatsPage() {
                   setGroupTitle('')
                 })
                 .catch((e) => {
-                  const msg = e instanceof Error ? e.message : String(e)
-                  setError(/validation/i.test(msg) ? 'Укажите название группы' : msg)
+                  const msg = (e instanceof Error ? e.message : String(e)).replace(/^Error:\s*/i, '')
+                  if (/сессия истекла|invalid token|unauthorized|authorization required/i.test(msg)) {
+                    setError('Сессия истекла или токен недействителен. Войдите снова.')
+                    return
+                  }
+                  setError(/^validation$/i.test(msg) ? 'Укажите название группы' : msg)
                 })
             }}
           >

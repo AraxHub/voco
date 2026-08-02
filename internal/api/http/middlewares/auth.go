@@ -29,7 +29,10 @@ func Auth(svc *auth.Service) gin.HandlerFunc {
 		raw := strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))
 		user, err := svc.Verify(c.Request.Context(), raw)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error":  "invalid token",
+				"detail": err.Error(),
+			})
 			return
 		}
 

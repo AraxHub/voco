@@ -26,9 +26,12 @@ function sameDay(a: Date, b: Date) {
 }
 
 function friendlyError(err: unknown) {
-  const msg = err instanceof Error ? err.message : String(err)
-  if (/validation/i.test(msg) && /назван/i.test(msg)) return msg.replace(/^Error:\s*/i, '')
-  if (/validation/i.test(msg)) return 'Укажите название встречи'
+  const msg = (err instanceof Error ? err.message : String(err)).replace(/^Error:\s*/i, '')
+  if (/сессия истекла|invalid token|unauthorized|authorization required/i.test(msg)) {
+    return 'Сессия истекла или токен недействителен. Войдите снова.'
+  }
+  if (/validation/i.test(msg) && /назван/i.test(msg)) return msg
+  if (/^validation$/i.test(msg)) return 'Укажите название встречи'
   return msg
 }
 
