@@ -1,0 +1,145 @@
+name: Pipeline
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pipeline-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  test-api:
+    name: Test API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: CGO_ENABLED=0 go build -o /tmp/voco ./cmd/voco
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      VITE_API_BASE_URL: ""
+      VITE_KEYCLOAK_URL: https://auth.voco-online.ru
+      VITE_KEYCLOAK_REALM: voco
+      VITE_KEYCLOAK_CLIENT_ID: voco-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck & build
+        run: npm run build
+
+  publish:
+    name: Build & push images
+    needs: [test-api, test-frontend]
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: backend
+            image: voco-backend
+            file: deployment/k8s/images/backend/Dockerfile
+            context: .
+          - name: frontend
+            image: voco-frontend
+            file: deployment/k8s/images/frontend/Dockerfile
+            context: .
+            build_args: |
+              VITE_API_BASE_URL=
+              VITE_KEYCLOAK_URL=https://auth.voco-online.ru
+              VITE_KEYCLOAK_REALM=voco
+              VITE_KEYCLOAK_CLIENT_ID=voco-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image name
+        id: meta
+        run: |
+          owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          image="${{ env.REGISTRY }}/${owner}/${{ matrix.image }}"
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+          echo "tags=${image}:sha-${GITHUB_SHA::7},${image}:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push (${{ matrix.name }})
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: ${{ matrix.build_args || '' }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    name: Deploy to VPS
+    needs: [publish]
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            SHORT='${{ github.sha }}'
+            SHORT="${SHORT:0:7}"
+            OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+            BE_IMG="ghcr.io/${OWNER}/voco-backend:sha-${SHORT}"
+            FE_IMG="ghcr.io/${OWNER}/voco-frontend:sha-${SHORT}"
+            echo "Deploying backend=${BE_IMG}"
+            echo "Deploying frontend=${FE_IMG}"
+            kubectl -n voco set image deploy/voco-backend backend="${BE_IMG}"
+            kubectl -n voco set image deploy/voco-frontend frontend="${FE_IMG}"
+            kubectl -n voco rollout status deploy/voco-backend --timeout=180s
+            kubectl -n voco rollout status deploy/voco-frontend --timeout=180s
+            kubectl -n voco get pods -o wide

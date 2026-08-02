@@ -20,8 +20,18 @@ resources:
   - keycloak-configmap.yaml
   - livekit-configmap.yaml
 
+images:
+  - name: voco-backend
+    newName: ghcr.io/araxhub/voco-backend
+    newTag: latest
+  - name: voco-frontend
+    newName: ghcr.io/araxhub/voco-frontend
+    newTag: latest
+
 patches:
   - path: patch-backend-env.yaml
   - path: patch-keycloak-env.yaml
   - path: patch-livekit-service-nodeport.yaml
   - path: patch-livekit-service-udp-nodeport.yaml
+  - path: patch-backend-image.yaml
+  - path: patch-frontend-image.yaml
