@@ -2,6 +2,7 @@ package chat_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	blobmem "voco/internal/adapters/blob/memory"
@@ -79,7 +80,7 @@ func TestGroupTitleAdminLeaveReact(t *testing.T) {
 	uc := chat.New(store, blobmem.NewBlobStore(), &roomStub{}, noopRT{}, chat.Config{})
 	admin, m1, m2 := uuid.New(), uuid.New(), uuid.New()
 
-	if _, err := uc.CreateGroup(ctx, admin, "", []domain.UserID{m1}, nil); err != domain.ErrValidation {
+	if _, err := uc.CreateGroup(ctx, admin, "", []domain.UserID{m1}, nil); !errors.Is(err, domain.ErrValidation) {
 		t.Fatal("title required")
 	}
 	g, err := uc.CreateGroup(ctx, admin, "Team", []domain.UserID{m1, m2}, nil)

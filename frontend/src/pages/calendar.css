@@ -15,7 +15,8 @@
 }
 
 .cal__views button,
-.cal__dayCell {
+.cal__dayCell,
+.cal__weekHead {
   border: 1px solid var(--voco-border);
   background: transparent;
   color: var(--voco-text);
@@ -46,7 +47,7 @@
   min-width: min(420px, 100%);
 }
 
-.cal__grid {
+.cal__day {
   border: 1px solid var(--voco-border);
   border-radius: 16px;
   overflow: auto;
@@ -75,10 +76,11 @@
 
 .cal__event {
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   background: color-mix(in srgb, var(--voco-accent) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--voco-accent) 35%, transparent);
   cursor: grab;
+  font-size: 12px;
 }
 
 .cal__event.is-cancelled {
@@ -94,7 +96,7 @@
 .cal__eventActions {
   display: flex;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .cal__eventActions button {
@@ -105,24 +107,114 @@
   cursor: pointer;
 }
 
+/* Month: calendar cells */
 .cal__month {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
 }
 
+.cal__monthHead {
+  text-align: center;
+  font-size: 12px;
+  color: var(--voco-text-muted);
+  padding: 4px 0;
+}
+
 .cal__dayCell {
-  min-height: 84px;
+  min-height: 92px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
 }
 
+.cal__dayCell.is-out {
+  opacity: 0.45;
+}
+
+.cal__dayCell.is-today {
+  border-color: color-mix(in srgb, var(--voco-accent) 55%, transparent);
+}
+
 .cal__dayCell em {
   font-style: normal;
   font-size: 11px;
   color: var(--voco-accent);
+}
+
+/* Week: 7-day chessboard × hours */
+.cal__week {
+  display: grid;
+  grid-template-columns: 56px repeat(7, minmax(96px, 1fr));
+  border: 1px solid var(--voco-border);
+  border-radius: 16px;
+  overflow: auto;
+  max-height: calc(100svh - 140px);
+}
+
+.cal__weekCorner {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: color-mix(in srgb, var(--voco-bg) 92%, transparent);
+  border-bottom: 1px solid var(--voco-border);
+}
+
+.cal__weekHead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid var(--voco-border);
+  border-left: 1px solid color-mix(in srgb, var(--voco-border) 60%, transparent);
+  background: color-mix(in srgb, var(--voco-bg) 92%, transparent);
+  padding: 10px 4px;
+}
+
+.cal__weekHead span {
+  font-size: 11px;
+  color: var(--voco-text-muted);
+}
+
+.cal__weekHead strong {
+  font-size: 15px;
+}
+
+.cal__weekHead.is-today strong {
+  color: var(--voco-accent);
+}
+
+.cal__weekHourRow {
+  display: contents;
+}
+
+.cal__weekHourRow .cal__hour {
+  border-top: 1px solid color-mix(in srgb, var(--voco-border) 55%, transparent);
+  min-height: 52px;
+}
+
+.cal__weekCell {
+  min-height: 52px;
+  border-top: 1px solid color-mix(in srgb, var(--voco-border) 55%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--voco-border) 55%, transparent);
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cal__weekCell.is-a {
+  background: color-mix(in srgb, var(--voco-text) 3%, transparent);
+}
+
+.cal__weekCell.is-b {
+  background: color-mix(in srgb, var(--voco-accent) 4%, transparent);
 }
 
 .cal__error {
@@ -133,5 +225,9 @@
   .cal__toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .cal__week {
+    grid-template-columns: 44px repeat(7, minmax(72px, 1fr));
   }
 }

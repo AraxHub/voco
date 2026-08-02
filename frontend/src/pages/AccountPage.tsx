@@ -88,9 +88,9 @@ export function AccountPage() {
         setLastName(data.lastName ?? '')
         try {
           const me = await fetchMe()
-          if (!cancelled) setNickname(me.nickname || '')
+          if (!cancelled) setNickname(me.nickname || auth.username || '')
         } catch {
-          /* backend may be unavailable */
+          if (!cancelled && auth.username) setNickname(auth.username)
         }
         try {
           const ps = await getPushSettings()
@@ -135,10 +135,12 @@ export function AccountPage() {
         email: profile?.email,
       }
       await updateAccount(next)
-      if (nickname.trim()) {
-        await updateMe(nickname.trim(), `${firstName} ${lastName}`.trim())
+      const loginNick = (auth.username || nickname).trim()
+      if (loginNick) {
+        await updateMe(loginNick, `${firstName} ${lastName}`.trim())
       }
       await auth.refreshProfile()
+      setNickname(loginNick)
       setProfile(next)
       setProfileOk('Профиль успешно сохранён.')
     } catch (err) {
@@ -264,11 +266,22 @@ export function AccountPage() {
               </div>
 
               <GlassInput
-                label="Никнейм (поиск в чатах)"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                autoComplete="nickname"
+                label="Никнейм (логин)"
+                value={auth.username || nickname}
+                readOnly
+                autoComplete="username"
               />
+              <p
+                style={{
+                  margin: '-4px 0 8px',
+                  fontFamily: 'Outfit, sans-serif',
+                  fontSize: 12,
+                  color: 'var(--voco-text-muted)',
+                  lineHeight: 1.4,
+                }}
+              >
+                Так вас будут видеть другие юзеры. Совпадает с логином.
+              </p>
 
               {profileOk && <StatusMessage type="success">{profileOk}</StatusMessage>}
 

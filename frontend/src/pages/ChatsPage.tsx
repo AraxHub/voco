@@ -141,14 +141,24 @@ export function ChatsPage() {
         <div className="chats__newGroup">
           <GlassInput value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)} placeholder="Название группы" />
           <GhostButton
+            type="button"
             onClick={() => {
-              void createGroup(groupTitle, [])
+              const trimmed = groupTitle.trim()
+              if (!trimmed) {
+                setError('Укажите название группы')
+                return
+              }
+              setError(null)
+              void createGroup(trimmed, [])
                 .then((c) => {
                   void reloadList()
                   nav(`/chats/${cid(c)}`)
                   setGroupTitle('')
                 })
-                .catch((e) => setError(String(e)))
+                .catch((e) => {
+                  const msg = e instanceof Error ? e.message : String(e)
+                  setError(/validation/i.test(msg) ? 'Укажите название группы' : msg)
+                })
             }}
           >
             + Группа

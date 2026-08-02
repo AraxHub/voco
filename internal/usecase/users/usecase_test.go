@@ -13,13 +13,16 @@ func TestEnsureAndNicknameUnique(t *testing.T) {
 	store := users.NewMemoryStore()
 	uc := users.New(store, nil)
 
-	a, err := uc.EnsureFromAuth(ctx, "sub-a", "a@x.com", "A")
+	a, err := uc.EnsureFromAuth(ctx, "sub-a", "a@x.com", "A", "alice_login")
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := uc.EnsureFromAuth(ctx, "sub-b", "b@x.com", "B")
+	b, err := uc.EnsureFromAuth(ctx, "sub-b", "b@x.com", "B", "bob_login")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if a.Nickname != "alice_login" || b.Nickname != "bob_login" {
+		t.Fatalf("nickname should equal login: a=%q b=%q", a.Nickname, b.Nickname)
 	}
 
 	if _, err := uc.UpdateMe(ctx, a.ID, "alice", "Alice"); err != nil {

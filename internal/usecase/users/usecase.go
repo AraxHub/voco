@@ -12,7 +12,7 @@ import (
 )
 
 type Store interface {
-	UpsertByKeycloakSub(ctx context.Context, sub, email, displayName string) (domain.User, error)
+	UpsertByKeycloakSub(ctx context.Context, sub, email, displayName, nickname string) (domain.User, error)
 	GetByID(ctx context.Context, id domain.UserID) (domain.User, error)
 	GetByKeycloakSub(ctx context.Context, sub string) (domain.User, bool, error)
 	UpdateProfile(ctx context.Context, id domain.UserID, nickname, displayName string) (domain.User, error)
@@ -42,11 +42,15 @@ func New(store Store, dir Directory) *Usecase {
 	return &Usecase{store: store, dir: dir}
 }
 
-func (uc *Usecase) EnsureFromAuth(ctx context.Context, keycloakSub, email, name string) (domain.User, error) {
+func (uc *Usecase) EnsureFromAuth(ctx context.Context, keycloakSub, email, name, username string) (domain.User, error) {
 	if strings.TrimSpace(keycloakSub) == "" {
 		return domain.User{}, domain.ErrValidation
 	}
-	u, err := uc.store.UpsertByKeycloakSub(ctx, keycloakSub, email, name)
+	nick := strings.TrimSpace(username)
+	if nick == "" {
+		nick = strings.TrimSpace(email)
+	}
+	u, err := uc.store.UpsertByKeycloakSub(ctx, keycloakSub, email, name, nick)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -60,13 +64,22 @@ func (uc *Usecase) Me(ctx context.Context, id domain.UserID) (domain.User, error
 
 func (uc *Usecase) UpdateMe(ctx context.Context, id domain.UserID, nickname, displayName string) (domain.User, error) {
 	nickname = strings.TrimSpace(nickname)
+	displayName = strings.TrimSpace(displayName)
+	// Nickname == login: if client omits it, keep existing and only refresh display name.
+	if nickname == "" {
+		u, err := uc.store.GetByID(ctx, id)
+		if err != nil {
+			return domain.User{}, err
+		}
+		nickname = u.Nickname
+	}
 	if nickname == "" {
 		return domain.User{}, domain.ErrValidation
 	}
 	if utf8.RuneCountInString(nickname) > 64 {
 		return domain.User{}, domain.ErrValidation
 	}
-	return uc.store.UpdateProfile(ctx, id, nickname, strings.TrimSpace(displayName))
+	return uc.store.UpdateProfile(ctx, id, nickname, displayName)
 }
 
 func (uc *Usecase) Search(ctx context.Context, q string, limit int) ([]domain.User, error) {

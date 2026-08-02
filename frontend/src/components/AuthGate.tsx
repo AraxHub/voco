@@ -140,6 +140,18 @@ export function AuthGate(props: Props) {
           <SecondaryButton fullWidth onClick={() => void auth.register(redirectUri)}>
             Зарегистрироваться
           </SecondaryButton>
+          <p
+            style={{
+              margin: '4px 2px 0',
+              fontFamily: 'Outfit, sans-serif',
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: 'var(--voco-text-muted)',
+              textAlign: 'center',
+            }}
+          >
+            Логин = никнейм: так вас будут видеть другие юзеры
+          </p>
           {props.mode === 'room' && (
             <>
               <div style={{ height: 4 }} />

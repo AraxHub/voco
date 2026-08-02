@@ -22,7 +22,7 @@ func EnsureUser(uc *users.Usecase) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		u, err := uc.EnsureFromAuth(c.Request.Context(), au.Sub, au.Email, au.Name)
+		u, err := uc.EnsureFromAuth(c.Request.Context(), au.Sub, au.Email, au.Name, au.Username)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

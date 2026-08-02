@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -135,7 +136,7 @@ func (uc *Usecase) GetOrCreateDirect(ctx context.Context, me, peer domain.UserID
 func (uc *Usecase) CreateGroup(ctx context.Context, me domain.UserID, title string, memberIDs []domain.UserID, avatar *domain.BlobID) (domain.Conversation, error) {
 	title = strings.TrimSpace(title)
 	if title == "" {
-		return domain.Conversation{}, domain.ErrValidation
+		return domain.Conversation{}, fmt.Errorf("%w: укажите название группы", domain.ErrValidation)
 	}
 	uniq := map[domain.UserID]struct{}{me: {}}
 	for _, id := range memberIDs {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	pgadapter "voco/internal/adapters/postgres"
@@ -23,22 +22,46 @@ func NewUserRepo(db *pgadapter.Client) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (r *UserRepo) UpsertByKeycloakSub(ctx context.Context, sub, email, displayName string) (domain.User, error) {
+func (r *UserRepo) UpsertByKeycloakSub(ctx context.Context, sub, email, displayName, nickname string) (domain.User, error) {
 	now := time.Now().UTC()
 	var u domain.User
 	err := r.db.QueryRow(ctx, `
 		INSERT INTO users (id, keycloak_sub, nickname, email, display_name, created_at, updated_at, last_seen_at)
-		VALUES ($1, $2, '', $3, $4, $5, $5, $5)
+		VALUES ($1, $2, $3, $4, $5, $6, $6, $6)
 		ON CONFLICT (keycloak_sub) DO UPDATE SET
 			email = EXCLUDED.email,
 			display_name = CASE WHEN EXCLUDED.display_name <> '' THEN EXCLUDED.display_name ELSE users.display_name END,
+			nickname = CASE
+				WHEN EXCLUDED.nickname <> '' AND (users.nickname = '' OR users.nickname IS DISTINCT FROM EXCLUDED.nickname)
+					THEN EXCLUDED.nickname
+				ELSE users.nickname
+			END,
 			updated_at = EXCLUDED.updated_at,
 			last_seen_at = EXCLUDED.last_seen_at
 		RETURNING id, keycloak_sub, nickname, email, display_name, avatar_blob_id, created_at, updated_at, last_seen_at
-	`, uuid.New(), sub, email, displayName, now).Scan(
+	`, uuid.New(), sub, nickname, email, displayName, now).Scan(
 		&u.ID, &u.KeycloakSub, &u.Nickname, &u.Email, &u.DisplayName, &u.AvatarBlobID,
 		&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt,
 	)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" && nickname != "" {
+			// nickname taken — keep existing nickname, still upsert identity fields
+			err = r.db.QueryRow(ctx, `
+				INSERT INTO users (id, keycloak_sub, nickname, email, display_name, created_at, updated_at, last_seen_at)
+				VALUES ($1, $2, '', $3, $4, $5, $5, $5)
+				ON CONFLICT (keycloak_sub) DO UPDATE SET
+					email = EXCLUDED.email,
+					display_name = CASE WHEN EXCLUDED.display_name <> '' THEN EXCLUDED.display_name ELSE users.display_name END,
+					updated_at = EXCLUDED.updated_at,
+					last_seen_at = EXCLUDED.last_seen_at
+				RETURNING id, keycloak_sub, nickname, email, display_name, avatar_blob_id, created_at, updated_at, last_seen_at
+			`, uuid.New(), sub, email, displayName, now).Scan(
+				&u.ID, &u.KeycloakSub, &u.Nickname, &u.Email, &u.DisplayName, &u.AvatarBlobID,
+				&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt,
+			)
+		}
+	}
 	if err != nil {
 		return domain.User{}, fmt.Errorf("upsert user: %w", err)
 	}
@@ -144,16 +167,5 @@ func (r *UserRepo) ListAll(ctx context.Context) ([]domain.User, error) {
 }
 
 func (r *UserRepo) UpsertSynced(ctx context.Context, sub, email, displayName, nickname string) (domain.User, error) {
-	u, err := r.UpsertByKeycloakSub(ctx, sub, email, displayName)
-	if err != nil {
-		return domain.User{}, err
-	}
-	if u.Nickname == "" && strings.TrimSpace(nickname) != "" {
-		updated, err := r.UpdateProfile(ctx, u.ID, nickname, displayName)
-		if err == domain.ErrNicknameTaken {
-			return u, nil
-		}
-		return updated, err
-	}
-	return u, nil
+	return r.UpsertByKeycloakSub(ctx, sub, email, displayName, nickname)
 }

@@ -10,9 +10,10 @@ import (
 )
 
 type User struct {
-	Sub   string
-	Email string
-	Name  string
+	Sub      string
+	Email    string
+	Name     string
+	Username string
 }
 
 type Service struct {
@@ -77,9 +78,10 @@ func (s *Service) Verify(ctx context.Context, rawToken string) (User, error) {
 	}
 
 	var claims struct {
-		Email string `json:"email"`
-		Name  string `json:"name"`
-		Azp   string `json:"azp"`
+		Email             string `json:"email"`
+		Name              string `json:"name"`
+		PreferredUsername string `json:"preferred_username"`
+		Azp               string `json:"azp"`
 	}
 	if err := token.Claims(&claims); err != nil {
 		return User{}, err
@@ -90,8 +92,9 @@ func (s *Service) Verify(ctx context.Context, rawToken string) (User, error) {
 	}
 
 	return User{
-		Sub:   token.Subject,
-		Email: claims.Email,
-		Name:  claims.Name,
+		Sub:      token.Subject,
+		Email:    claims.Email,
+		Name:     claims.Name,
+		Username: claims.PreferredUsername,
 	}, nil
 }

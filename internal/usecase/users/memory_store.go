@@ -24,7 +24,7 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
-func (s *MemoryStore) UpsertByKeycloakSub(_ context.Context, sub, email, displayName string) (domain.User, error) {
+func (s *MemoryStore) UpsertByKeycloakSub(_ context.Context, sub, email, displayName, nickname string) (domain.User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if id, ok := s.bySub[sub]; ok {
@@ -33,17 +33,38 @@ func (s *MemoryStore) UpsertByKeycloakSub(_ context.Context, sub, email, display
 		if displayName != "" {
 			u.DisplayName = displayName
 		}
+		if nickname != "" && (u.Nickname == "" || !strings.EqualFold(u.Nickname, nickname)) {
+			clash := false
+			for _, o := range s.byID {
+				if o.ID != id && strings.EqualFold(o.Nickname, nickname) {
+					clash = true
+					break
+				}
+			}
+			if !clash {
+				u.Nickname = nickname
+			} else if u.Nickname == "" {
+				// keep empty if taken
+			}
+		}
 		u.UpdatedAt = time.Now().UTC()
 		s.byID[id] = u
 		return u, nil
 	}
 	now := time.Now().UTC()
+	nick := nickname
+	for _, o := range s.byID {
+		if strings.EqualFold(o.Nickname, nick) && nick != "" {
+			nick = ""
+			break
+		}
+	}
 	u := domain.User{
 		ID:          uuid.New(),
 		KeycloakSub: sub,
 		Email:       email,
 		DisplayName: displayName,
-		Nickname:    "",
+		Nickname:    nick,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 		LastSeenAt:  now,
@@ -132,42 +153,6 @@ func (s *MemoryStore) ListAll(_ context.Context) ([]domain.User, error) {
 	return out, nil
 }
 
-func (s *MemoryStore) UpsertSynced(_ context.Context, sub, email, displayName, nickname string) (domain.User, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	now := time.Now().UTC()
-	if id, ok := s.bySub[sub]; ok {
-		u := s.byID[id]
-		u.Email = email
-		u.DisplayName = displayName
-		if u.Nickname == "" && nickname != "" {
-			// avoid clash
-			clash := false
-			for _, o := range s.byID {
-				if o.ID != id && strings.EqualFold(o.Nickname, nickname) {
-					clash = true
-					break
-				}
-			}
-			if !clash {
-				u.Nickname = nickname
-			}
-		}
-		u.UpdatedAt = now
-		s.byID[id] = u
-		return u, nil
-	}
-	u := domain.User{
-		ID: uuid.New(), KeycloakSub: sub, Email: email, DisplayName: displayName,
-		Nickname: nickname, CreatedAt: now, UpdatedAt: now, LastSeenAt: now,
-	}
-	for _, o := range s.byID {
-		if strings.EqualFold(o.Nickname, nickname) && nickname != "" {
-			u.Nickname = ""
-			break
-		}
-	}
-	s.byID[u.ID] = u
-	s.bySub[sub] = u.ID
-	return u, nil
+func (s *MemoryStore) UpsertSynced(ctx context.Context, sub, email, displayName, nickname string) (domain.User, error) {
+	return s.UpsertByKeycloakSub(ctx, sub, email, displayName, nickname)
 }

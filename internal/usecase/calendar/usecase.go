@@ -2,6 +2,7 @@ package calendar
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -50,8 +51,11 @@ func New(store Store, rooms RoomCreator, rt Realtime) *Usecase {
 
 func (uc *Usecase) Create(ctx context.Context, organizer domain.UserID, title, description, tz, rrule string, starts, ends time.Time, attendees []domain.UserID, remind []int) (domain.CalendarEvent, error) {
 	title = strings.TrimSpace(title)
-	if title == "" || !ends.After(starts) {
-		return domain.CalendarEvent{}, domain.ErrValidation
+	if title == "" {
+		return domain.CalendarEvent{}, fmt.Errorf("%w: укажите название встречи", domain.ErrValidation)
+	}
+	if !ends.After(starts) {
+		return domain.CalendarEvent{}, fmt.Errorf("%w: время окончания должно быть позже начала", domain.ErrValidation)
 	}
 	if tz == "" {
 		tz = "UTC"
