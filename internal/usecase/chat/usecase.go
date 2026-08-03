@@ -58,6 +58,7 @@ type Store interface {
 	RemoveReaction(ctx context.Context, messageID domain.MessageID, userID domain.UserID, emoji string) error
 	SetRead(ctx context.Context, cid domain.ConversationID, userID domain.UserID, lastMessageID domain.MessageID, at time.Time) error
 	GetRead(ctx context.Context, cid domain.ConversationID, userID domain.UserID) (domain.MessageID, bool, error)
+	CountUnread(ctx context.Context, cid domain.ConversationID, userID domain.UserID) (int, error)
 	UpdateConversationAvatar(ctx context.Context, cid domain.ConversationID, blobID *domain.BlobID) error
 	UpdateConversationTitle(ctx context.Context, cid domain.ConversationID, title string) error
 }
@@ -812,6 +813,93 @@ func (uc *Usecase) ListConversations(ctx context.Context, me domain.UserID) ([]d
 		uc.enrichConversationTitle(ctx, me, &list[i])
 	}
 	return list, nil
+}
+
+// ConversationPreview is a chat-list row with last message and unread.
+type ConversationPreview struct {
+	Conversation domain.Conversation
+	AvatarURL    string
+	PeerUserID   *domain.UserID
+	LastMessage  *domain.Message
+	UnreadCount  int
+}
+
+func (uc *Usecase) conversationAvatarURL(ctx context.Context, me domain.UserID, c domain.Conversation, baseURL string) (avatarURL string, peerID *domain.UserID) {
+	blobURL := func(id domain.BlobID) string {
+		base := strings.TrimRight(baseURL, "/")
+		path := "/api/v1/blobs/" + id.String()
+		if base == "" {
+			return path
+		}
+		return base + path
+	}
+	if c.Type == domain.ConversationGroup && c.AvatarBlobID != nil {
+		return blobURL(*c.AvatarBlobID), nil
+	}
+	if c.Type != domain.ConversationDirect || uc.users == nil {
+		if c.AvatarBlobID != nil {
+			return blobURL(*c.AvatarBlobID), nil
+		}
+		return "", nil
+	}
+	members, err := uc.store.ListMembers(ctx, c.ID)
+	if err != nil {
+		return "", nil
+	}
+	for _, m := range members {
+		if m.LeftAt != nil || m.UserID == me {
+			continue
+		}
+		pid := m.UserID
+		peerID = &pid
+		u, err := uc.users.GetByID(ctx, m.UserID)
+		if err != nil {
+			return "", peerID
+		}
+		if u.AvatarBlobID != nil {
+			return blobURL(*u.AvatarBlobID), peerID
+		}
+		return "", peerID
+	}
+	return "", nil
+}
+
+func (uc *Usecase) ListConversationPreviews(ctx context.Context, me domain.UserID, baseURL string) ([]ConversationPreview, error) {
+	list, err := uc.ListConversations(ctx, me)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]ConversationPreview, 0, len(list))
+	for _, c := range list {
+		p := ConversationPreview{Conversation: c}
+		p.AvatarURL, p.PeerUserID = uc.conversationAvatarURL(ctx, me, c, baseURL)
+		msgs, err := uc.store.ListMessages(ctx, c.ID, me, 1, nil)
+		if err == nil && len(msgs) > 0 {
+			msg := msgs[0]
+			p.LastMessage = &msg
+		}
+		if n, err := uc.store.CountUnread(ctx, c.ID, me); err == nil {
+			p.UnreadCount = n
+		}
+		out = append(out, p)
+	}
+	// Sort by last activity (newest first); empty chats by CreatedAt.
+	for i := 0; i < len(out); i++ {
+		for j := i + 1; j < len(out); j++ {
+			ti := out[i].Conversation.CreatedAt
+			if out[i].LastMessage != nil {
+				ti = out[i].LastMessage.CreatedAt
+			}
+			tj := out[j].Conversation.CreatedAt
+			if out[j].LastMessage != nil {
+				tj = out[j].LastMessage.CreatedAt
+			}
+			if tj.After(ti) {
+				out[i], out[j] = out[j], out[i]
+			}
+		}
+	}
+	return out, nil
 }
 
 func (uc *Usecase) ListMessages(ctx context.Context, me domain.UserID, cid domain.ConversationID, limit int) ([]domain.Message, error) {

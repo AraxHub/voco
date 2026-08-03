@@ -291,6 +291,35 @@ func (s *MemoryStore) GetRead(_ context.Context, cid domain.ConversationID, user
 	return id, ok, nil
 }
 
+func (s *MemoryStore) CountUnread(_ context.Context, cid domain.ConversationID, userID domain.UserID) (int, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	lastID, hasRead := s.reads[[2]uuid.UUID{cid, userID}]
+	var lastAt time.Time
+	if hasRead {
+		if m, ok := s.messages[lastID]; ok {
+			lastAt = m.CreatedAt
+		}
+	}
+	n := 0
+	for _, m := range s.messages {
+		if m.ConversationID != cid || m.SenderID == userID {
+			continue
+		}
+		if m.DeletedForAllAt != nil {
+			continue
+		}
+		if _, hid := s.hidden[[2]uuid.UUID{userID, m.ID}]; hid {
+			continue
+		}
+		if hasRead && !m.CreatedAt.After(lastAt) {
+			continue
+		}
+		n++
+	}
+	return n, nil
+}
+
 func (s *MemoryStore) UpdateConversationAvatar(_ context.Context, cid domain.ConversationID, blobID *domain.BlobID) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

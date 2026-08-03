@@ -20,13 +20,12 @@ func Auth(svc *auth.Service) gin.HandlerFunc {
 			return
 		}
 
-		header := strings.TrimSpace(c.GetHeader("Authorization"))
-		if !strings.HasPrefix(header, "Bearer ") {
+		raw := bearerOrQueryToken(c)
+		if raw == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization required"})
 			return
 		}
 
-		raw := strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))
 		user, err := svc.Verify(c.Request.Context(), raw)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -70,4 +69,16 @@ func UserFromContext(c *gin.Context) (auth.User, bool) {
 	}
 	user, ok := v.(auth.User)
 	return user, ok
+}
+
+// bearerOrQueryToken supports Authorization Bearer and ?access_token= for <img src> blob URLs.
+func bearerOrQueryToken(c *gin.Context) string {
+	header := strings.TrimSpace(c.GetHeader("Authorization"))
+	if strings.HasPrefix(header, "Bearer ") {
+		return strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))
+	}
+	if t := strings.TrimSpace(c.Query("access_token")); t != "" {
+		return t
+	}
+	return ""
 }

@@ -290,6 +290,7 @@ export function RoomPage() {
               void cancelCall(id).catch(() => undefined)
               callActiveRef.current = false
               setJoinState({ phase: 'ended', message: 'Звонок завершён' })
+              nav('/chats')
               return
             }
             setJoinState({ phase: 'prejoin' })

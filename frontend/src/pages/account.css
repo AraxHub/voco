@@ -79,6 +79,50 @@
   font-size: 15px;
 }
 
+.accountPage__avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.accountPage__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.accountPage__avatar--empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--voco-accent) 22%, transparent);
+  color: var(--voco-text);
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.accountPage__avatarActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.accountPage__avatarBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--voco-border);
+  background: var(--voco-input-bg);
+  color: var(--voco-text);
+  font-size: 13px;
+  cursor: pointer;
+  width: fit-content;
+}
+
 .accountPage__actions {
   display: flex;
   gap: 10px;

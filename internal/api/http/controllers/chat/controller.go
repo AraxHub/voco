@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	blobsctrl "voco/internal/api/http/controllers/blobs"
 	"voco/internal/api/http/middlewares"
 	"voco/internal/domain"
 	"voco/internal/usecase/chat"
@@ -15,8 +16,8 @@ import (
 )
 
 type Controller struct {
-	uc     *chat.Usecase
-	users  *users.Usecase
+	uc      *chat.Usecase
+	users   *users.Usecase
 	baseURL string
 }
 
@@ -60,17 +61,90 @@ func (c *Controller) me(ctx *gin.Context) (domain.User, bool) {
 	return u, ok
 }
 
+func (c *Controller) blobURL(id string) string {
+	return blobsctrl.BlobURL(c.baseURL, id)
+}
+
+func (c *Controller) attachmentDTOs(atts []domain.MessageAttachment) []gin.H {
+	out := make([]gin.H, 0, len(atts))
+	for _, a := range atts {
+		out = append(out, gin.H{
+			"id":       a.ID,
+			"blobId":   a.BlobID,
+			"kind":     a.Kind,
+			"filename": a.Filename,
+			"url":      c.blobURL(a.BlobID.String()),
+		})
+	}
+	return out
+}
+
+func (c *Controller) messageDTO(m domain.Message, senderName string) gin.H {
+	return gin.H{
+		"ID":              m.ID,
+		"id":              m.ID,
+		"ConversationID":  m.ConversationID,
+		"SenderID":        m.SenderID,
+		"senderId":        m.SenderID,
+		"senderName":      senderName,
+		"Body":            m.Body,
+		"CreatedAt":       m.CreatedAt,
+		"EditedAt":        m.EditedAt,
+		"DeletedForAllAt": m.DeletedForAllAt,
+		"Reactions":       m.Reactions,
+		"attachments":     c.attachmentDTOs(m.Attachments),
+	}
+}
+
 func (c *Controller) list(ctx *gin.Context) {
 	u, ok := c.me(ctx)
 	if !ok {
 		return
 	}
-	list, err := c.uc.ListConversations(ctx.Request.Context(), u.ID)
+	list, err := c.uc.ListConversationPreviews(ctx.Request.Context(), u.ID, c.baseURL)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, list)
+	out := make([]gin.H, 0, len(list))
+	for _, p := range list {
+		conv := p.Conversation
+		row := gin.H{
+			"ID":          conv.ID,
+			"id":          conv.ID,
+			"Type":        conv.Type,
+			"type":        conv.Type,
+			"Title":       conv.Title,
+			"title":       conv.Title,
+			"CreatedBy":   conv.CreatedBy,
+			"CreatedAt":   conv.CreatedAt,
+			"unreadCount": p.UnreadCount,
+		}
+		if p.AvatarURL != "" {
+			row["avatarUrl"] = p.AvatarURL
+		}
+		if p.PeerUserID != nil {
+			row["peerUserId"] = p.PeerUserID.String()
+		}
+		if p.LastMessage != nil {
+			preview := p.LastMessage.Body
+			if preview == "" && len(p.LastMessage.Attachments) > 0 {
+				if p.LastMessage.Attachments[0].Kind == domain.AttachmentImage {
+					preview = "📷 Фото"
+				} else {
+					preview = "📎 Файл"
+				}
+			}
+			row["lastMessage"] = gin.H{
+				"id":        p.LastMessage.ID,
+				"body":      preview,
+				"senderId":  p.LastMessage.SenderID,
+				"createdAt": p.LastMessage.CreatedAt,
+			}
+		}
+		out = append(out, row)
+	}
+	ctx.JSON(http.StatusOK, out)
 }
 
 func (c *Controller) direct(ctx *gin.Context) {
@@ -279,19 +353,7 @@ func (c *Controller) messages(ctx *gin.Context) {
 	}
 	out := make([]gin.H, 0, len(list))
 	for _, m := range list {
-		out = append(out, gin.H{
-			"ID":              m.ID,
-			"id":              m.ID,
-			"ConversationID":  m.ConversationID,
-			"SenderID":        m.SenderID,
-			"senderId":        m.SenderID,
-			"senderName":      names[m.SenderID],
-			"Body":            m.Body,
-			"CreatedAt":       m.CreatedAt,
-			"EditedAt":        m.EditedAt,
-			"DeletedForAllAt": m.DeletedForAllAt,
-			"Reactions":       m.Reactions,
-		})
+		out = append(out, c.messageDTO(m, names[m.SenderID]))
 	}
 	ctx.JSON(http.StatusOK, out)
 }
@@ -345,15 +407,7 @@ func (c *Controller) send(ctx *gin.Context) {
 			senderName = s
 		}
 	}
-	ctx.JSON(http.StatusOK, gin.H{
-		"ID": msg.ID, "id": msg.ID,
-		"ConversationID": msg.ConversationID,
-		"SenderID": msg.SenderID, "senderId": msg.SenderID,
-		"senderName": senderName,
-		"Body": msg.Body, "CreatedAt": msg.CreatedAt,
-		"EditedAt": msg.EditedAt, "DeletedForAllAt": msg.DeletedForAllAt,
-		"Reactions": msg.Reactions,
-	})
+	ctx.JSON(http.StatusOK, c.messageDTO(msg, senderName))
 }
 
 func (c *Controller) edit(ctx *gin.Context) {

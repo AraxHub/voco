@@ -16,6 +16,7 @@ type Store interface {
 	GetByID(ctx context.Context, id domain.UserID) (domain.User, error)
 	GetByKeycloakSub(ctx context.Context, sub string) (domain.User, bool, error)
 	UpdateProfile(ctx context.Context, id domain.UserID, nickname, displayName string) (domain.User, error)
+	UpdateAvatar(ctx context.Context, id domain.UserID, avatarBlobID *domain.BlobID) (domain.User, error)
 	SearchByNickname(ctx context.Context, query string, limit int) ([]domain.User, error)
 	TouchLastSeen(ctx context.Context, id domain.UserID) error
 	ListAll(ctx context.Context) ([]domain.User, error)
@@ -80,6 +81,10 @@ func (uc *Usecase) UpdateMe(ctx context.Context, id domain.UserID, nickname, dis
 		return domain.User{}, domain.ErrValidation
 	}
 	return uc.store.UpdateProfile(ctx, id, nickname, displayName)
+}
+
+func (uc *Usecase) UpdateAvatar(ctx context.Context, id domain.UserID, avatarBlobID *domain.BlobID) (domain.User, error) {
+	return uc.store.UpdateAvatar(ctx, id, avatarBlobID)
 }
 
 func (uc *Usecase) Search(ctx context.Context, q string, limit int) ([]domain.User, error) {

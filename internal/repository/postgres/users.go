@@ -188,6 +188,21 @@ func (r *UserRepo) UpdateProfile(ctx context.Context, id domain.UserID, nickname
 	return u, err
 }
 
+func (r *UserRepo) UpdateAvatar(ctx context.Context, id domain.UserID, avatarBlobID *domain.BlobID) (domain.User, error) {
+	var u domain.User
+	q := "UPDATE " + UserTable + " SET " + UserColAvatarBlobID + " = $2, " +
+		UserColUpdatedAt + " = now()" +
+		" WHERE " + UserColID + " = $1" +
+		" RETURNING " + UserSelect("")
+	err := r.db.QueryRow(ctx, q, id, avatarBlobID).Scan(
+		&u.ID, &u.KeycloakSub, &u.Nickname, &u.Email, &u.DisplayName, &u.AvatarBlobID,
+		&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.User{}, domain.ErrUserNotFound
+	}
+	return u, err
+}
+
 func (r *UserRepo) SearchByNickname(ctx context.Context, query string, limit int) ([]domain.User, error) {
 	rows, err := r.db.Query(ctx,
 		"SELECT "+UserSelect("")+" FROM "+UserTable+

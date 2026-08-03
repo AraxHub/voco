@@ -115,6 +115,19 @@ func (s *MemoryStore) UpdateProfile(_ context.Context, id domain.UserID, nicknam
 	return u, nil
 }
 
+func (s *MemoryStore) UpdateAvatar(_ context.Context, id domain.UserID, avatarBlobID *domain.BlobID) (domain.User, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	u, ok := s.byID[id]
+	if !ok {
+		return domain.User{}, domain.ErrUserNotFound
+	}
+	u.AvatarBlobID = avatarBlobID
+	u.UpdatedAt = time.Now().UTC()
+	s.byID[id] = u
+	return u, nil
+}
+
 func (s *MemoryStore) SearchByNickname(_ context.Context, query string, limit int) ([]domain.User, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

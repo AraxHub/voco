@@ -14,6 +14,15 @@ export type VocoUser = {
   email: string
   displayName: string
   lastSeenAt: string
+  avatarUrl?: string | null
+}
+
+export type MessageAttachment = {
+  id: string
+  blobId: string
+  kind: 'image' | 'file' | string
+  filename: string
+  url: string
 }
 
 export type Conversation = {
@@ -24,6 +33,15 @@ export type Conversation = {
   Title: string
   title?: string
   CreatedBy: string
+  avatarUrl?: string
+  unreadCount?: number
+  peerUserId?: string
+  lastMessage?: {
+    id: string
+    body: string
+    senderId: string
+    createdAt: string
+  }
 }
 
 export type ConversationMember = {
@@ -46,6 +64,7 @@ export type Message = {
   EditedAt?: string
   DeletedForAllAt?: string
   Reactions?: { Emoji: string; UserID: string }[]
+  attachments?: MessageAttachment[]
 }
 
 export type CalendarAttendee = {
@@ -141,6 +160,12 @@ export async function updateMe(nickname: string, displayName?: string): Promise<
   })
 }
 
+export async function updateAvatar(file: File): Promise<VocoUser> {
+  const fd = new FormData()
+  fd.append('file', file)
+  return http('/api/v1/users/me/avatar', { method: 'PUT', body: fd })
+}
+
 export async function searchUsers(q: string): Promise<VocoUser[]> {
   return http(`/api/v1/users/search?q=${encodeURIComponent(q)}`)
 }
@@ -200,11 +225,48 @@ export async function listMessages(conversationId: string): Promise<Message[]> {
   return http(`/api/v1/conversations/${conversationId}/messages`)
 }
 
-export async function sendMessage(conversationId: string, body: string): Promise<Message> {
+export async function sendMessage(
+  conversationId: string,
+  body: string,
+  files?: File[],
+): Promise<Message> {
+  if (files && files.length > 0) {
+    const fd = new FormData()
+    fd.append('body', body)
+    for (const f of files) fd.append('files', f)
+    return http(`/api/v1/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: fd,
+    })
+  }
   return http(`/api/v1/conversations/${conversationId}/messages`, {
     method: 'POST',
     body: JSON.stringify({ body }),
   })
+}
+
+export async function markRead(conversationId: string, messageId: string): Promise<void> {
+  return http(`/api/v1/conversations/${conversationId}/read`, {
+    method: 'POST',
+    body: JSON.stringify({ messageId }),
+  })
+}
+
+export async function sendTyping(conversationId: string): Promise<void> {
+  return http(`/api/v1/conversations/${conversationId}/typing`, { method: 'POST' })
+}
+
+/** Absolute or relative blob URL with access_token for <img src>. */
+export function authedBlobURL(pathOrUrl: string, token?: string): string {
+  const t = token ?? getAuthToken()
+  if (!pathOrUrl) return ''
+  try {
+    const u = new URL(pathOrUrl, window.location.origin)
+    if (t) u.searchParams.set('access_token', t)
+    return u.toString()
+  } catch {
+    return pathOrUrl
+  }
 }
 
 export async function acceptRequest(conversationId: string): Promise<void> {

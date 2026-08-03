@@ -642,6 +642,30 @@ func (r *ChatRepo) GetRead(ctx context.Context, cid domain.ConversationID, userI
 	return *id, true, err
 }
 
+func (r *ChatRepo) CountUnread(ctx context.Context, cid domain.ConversationID, userID domain.UserID) (int, error) {
+	var n int
+	err := r.db.QueryRow(ctx, `
+SELECT COUNT(*) FROM `+MessageTable+` m
+LEFT JOIN `+MessageHiddenTable+` h ON h.`+MessageHiddenColMessageID+` = m.`+MessageColID+` AND h.`+MessageHiddenColUserID+` = $2
+WHERE m.`+MessageColConversationID+` = $1
+  AND h.`+MessageHiddenColMessageID+` IS NULL
+  AND m.`+MessageColSenderID+` <> $2
+  AND m.`+MessageColDeletedForAllAt+` IS NULL
+  AND (
+    NOT EXISTS (
+      SELECT 1 FROM `+MessageReadTable+` r
+      WHERE r.`+MessageReadColConversationID+` = $1 AND r.`+MessageReadColUserID+` = $2
+        AND r.`+MessageReadColLastReadMessageID+` IS NOT NULL
+    )
+    OR m.`+MessageColCreatedAt+` > (
+      SELECT lm.`+MessageColCreatedAt+` FROM `+MessageTable+` lm
+      JOIN `+MessageReadTable+` r ON r.`+MessageReadColLastReadMessageID+` = lm.`+MessageColID+`
+      WHERE r.`+MessageReadColConversationID+` = $1 AND r.`+MessageReadColUserID+` = $2
+    )
+  )`, cid, userID).Scan(&n)
+	return n, err
+}
+
 func (r *ChatRepo) UpdateConversationAvatar(ctx context.Context, cid domain.ConversationID, blobID *domain.BlobID) error {
 	_, err := r.db.Exec(ctx,
 		"UPDATE "+ConversationTable+" SET "+ConversationColAvatarBlobID+" = $2 WHERE "+ConversationColID+" = $1",

@@ -8,11 +8,13 @@ import {
   type AccountProfile,
 } from '../lib/keycloakAccount'
 import {
+  authedBlobURL,
   fetchMe,
   getPushSettings,
   getVapidPublicKey,
   setPushSettings,
   subscribePush,
+  updateAvatar,
   updateMe,
 } from '../lib/api'
 import { PrimaryButton, DangerButton, GhostButton } from '../ui/Button'
@@ -36,6 +38,8 @@ export function AccountPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [nickname, setNickname] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarBusy, setAvatarBusy] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
 
   const [loading, setLoading] = useState(true)
@@ -95,10 +99,11 @@ export function AccountPage() {
         }
         if (me) {
           setNickname(me.nickname || auth.username || '')
+          setAvatarUrl(me.avatarUrl || null)
         } else if (auth.username) {
           setNickname(auth.username)
         }
-        if (push) setPushEnabled(Boolean(push.enabled))
+        if (push) setPushEnabled(Boolean(push.pushEnabled))
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Не удалось загрузить профиль')
@@ -194,6 +199,47 @@ export function AccountPage() {
             <>
               <form className="accountPage__card" onSubmit={onSaveProfile}>
                 <h2 className="accountPage__title">Профиль</h2>
+                <div className="accountPage__avatarRow">
+                  {avatarUrl ? (
+                    <img
+                      className="accountPage__avatar"
+                      src={authedBlobURL(avatarUrl, auth.token)}
+                      alt=""
+                    />
+                  ) : (
+                    <div className="accountPage__avatar accountPage__avatar--empty">
+                      {(auth.username || '?').slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="accountPage__avatarActions">
+                    <label className="accountPage__avatarBtn">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        disabled={avatarBusy}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          e.target.value = ''
+                          if (!file) return
+                          setAvatarBusy(true)
+                          setError(null)
+                          void updateAvatar(file)
+                            .then((u) => {
+                              setAvatarUrl(u.avatarUrl || null)
+                              setProfileOk('Аватар обновлён.')
+                            })
+                            .catch((err) =>
+                              setError(err instanceof Error ? err.message : 'Не удалось загрузить аватар'),
+                            )
+                            .finally(() => setAvatarBusy(false))
+                        }}
+                      />
+                      {avatarBusy ? 'Загрузка…' : 'Сменить фото'}
+                    </label>
+                    <p className="accountPage__hint">JPG/PNG, до 10 МБ</p>
+                  </div>
+                </div>
                 <div className="accountPage__field">
                   <span className="accountPage__label">Логин</span>
                   <div className="accountPage__readonly">{profile?.username ?? auth.username ?? '—'}</div>

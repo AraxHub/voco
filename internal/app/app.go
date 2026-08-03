@@ -12,6 +12,7 @@ import (
 	pgadapter "voco/internal/adapters/postgres"
 	webpushadapter "voco/internal/adapters/webpush"
 	httpapi "voco/internal/api/http"
+	blobsctrl "voco/internal/api/http/controllers/blobs"
 	calendarctrl "voco/internal/api/http/controllers/calendar"
 	chatctrl "voco/internal/api/http/controllers/chat"
 	pushctrl "voco/internal/api/http/controllers/push"
@@ -107,7 +108,9 @@ func (a *App) Run() error {
 	notify.NewWorker(calRepo, hub, pushSender, log).Start(ctx, 30*time.Second)
 
 	roomsCtrl := roomscontroller.New(roomsUC, a.cfg.Server.BaseUrl, usersUC)
-	usersCtrl := usersctrl.New(usersUC)
+	maxImg := a.cfg.Features.MaxImageBytes
+	usersCtrl := usersctrl.New(usersUC, blobStore, a.cfg.Server.BaseUrl, maxImg)
+	blobsCtrl := blobsctrl.New(blobStore, usersUC, a.cfg.Server.BaseUrl, maxImg)
 	chatCtrl := chatctrl.New(chatUC, usersUC, a.cfg.Server.BaseUrl)
 	calCtrl := calendarctrl.New(calUC, usersUC)
 	pushCtrl := pushctrl.New(pgrepo.NewPushRepo(db), usersUC, a.cfg.WebPush.VAPIDPublic)
@@ -116,7 +119,7 @@ func (a *App) Run() error {
 	serverCfg.WriteTimeout = 0 // WebSocket
 
 	server := httpapi.NewServer(serverCfg, log, middlewares.NewMW(authSvc))
-	server.AddController(roomsCtrl, usersCtrl, chatCtrl, calCtrl, pushCtrl)
+	server.AddController(roomsCtrl, usersCtrl, blobsCtrl, chatCtrl, calCtrl, pushCtrl)
 	server.AddRoutes(func(r *gin.Engine) {
 		r.GET("/api/v1/ws", hub.Handle)
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
