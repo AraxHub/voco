@@ -7,6 +7,7 @@ import { InCallLayout } from '../components/InCallLayout'
 import { PreJoinPreview } from '../components/PreJoinPreview'
 import { useAuth } from '../context/AuthContext'
 import { cancelCall, issueToken, wsURL } from '../lib/api'
+import { getAccessToken } from '../lib/keycloak'
 import { allowGuestAccess, hasGuestAccess } from '../lib/guestSession'
 import { PrimaryButton, NavButton } from '../ui/Button'
 import { StatusMessage } from '../ui/Card'
@@ -98,15 +99,32 @@ export function RoomPage() {
     videoRef.current.srcObject = previewStream
   }, [previewStream])
 
+  // Do NOT cancelCall in effect cleanup — React StrictMode remounts and would
+  // abort an outgoing call before the callee ever sees call.incoming.
+  // Cancel only on explicit leave (back button) or tab close.
   useEffect(() => {
     return () => {
       stopPreview()
-      if (callActiveRef.current && id) {
-        void cancelCall(id).catch(() => undefined)
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (!awaitingPeer || !id) return
+    const onPageHide = () => {
+      if (!callActiveRef.current) return
+      callActiveRef.current = false
+      const token = getAccessToken()
+      if (!token) return
+      void fetch(`/api/v1/calls/${encodeURIComponent(id)}/cancel`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        keepalive: true,
+      })
+    }
+    window.addEventListener('pagehide', onPageHide)
+    return () => window.removeEventListener('pagehide', onPageHide)
+  }, [awaitingPeer, id])
 
   async function onJoin() {
     if (!canJoin) return
@@ -261,6 +279,13 @@ export function RoomPage() {
             stopPreview()
             setCameraOn(false)
             setMicOn(false)
+            // While waiting for callee, LiveKit may disconnect during join — do not
+            // cancel the ringing call (that was killing incoming overlays).
+            if (callActiveRef.current && awaitingPeer) {
+              autoJoinedRef.current = false
+              setJoinState({ phase: 'prejoin' })
+              return
+            }
             if (callActiveRef.current) {
               void cancelCall(id).catch(() => undefined)
               callActiveRef.current = false

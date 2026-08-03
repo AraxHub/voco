@@ -107,6 +107,22 @@ export function ChatsPage() {
     void reloadList().catch((e) => setError(String(e)))
   }, [])
 
+  // Soft fallback when WS flaps — refresh sidebar on tab focus.
+  useEffect(() => {
+    const refresh = () => {
+      void reloadList().catch(() => undefined)
+    }
+    window.addEventListener('focus', refresh)
+    const onVis = () => {
+      if (document.visibilityState === 'visible') refresh()
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('focus', refresh)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [])
+
   useEffect(() => {
     if (!conversationId) {
       setMessages([])
@@ -138,7 +154,10 @@ export function ChatsPage() {
     }
     ws.onmessage = (ev) => {
       try {
-        const msg = JSON.parse(String(ev.data)) as { event?: string; payload?: { Body?: string; title?: string } }
+        const msg = JSON.parse(String(ev.data)) as {
+          event?: string
+          payload?: { Body?: string; title?: string; Title?: string }
+        }
         if (msg.event === 'message.created') {
           void reloadList()
           if (conversationId) {
@@ -147,9 +166,15 @@ export function ChatsPage() {
           }
           setToast('Новое сообщение')
         }
-        if (msg.event === 'conversation.updated' && conversationId) {
+        // Always refresh sidebar — peer must see new groups/DMs without manual reload.
+        if (msg.event === 'conversation.updated' || msg.event === 'conversation.created') {
           void reloadList()
-          void reloadMembers(conversationId)
+          if (conversationId) {
+            void reloadMembers(conversationId)
+            void reloadRequest(conversationId)
+          }
+          const title = msg.payload?.title || msg.payload?.Title
+          if (title) setToast(String(title))
         }
         if (msg.event === 'notification') {
           setToast(msg.payload?.title || 'Уведомление')

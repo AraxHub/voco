@@ -67,15 +67,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    let cancelled = false
+
     if (keycloak) {
       keycloak.onAuthSuccess = () => {
+        if (cancelled) return
         setAuthenticated(true)
         syncFromToken()
       }
       keycloak.onAuthRefreshSuccess = () => {
+        if (cancelled) return
         syncFromToken()
       }
       keycloak.onAuthLogout = () => {
+        if (cancelled) return
         setAuthenticated(false)
         setUsername(null)
         setDisplayName(null)
@@ -85,10 +90,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void initKeycloak()
       .then((ok) => {
-        setAuthenticated(ok)
+        if (cancelled) return
+        // Set auth before ready so RequireAuth never sees ready&&!authenticated mid-init.
+        setAuthenticated(ok || Boolean(keycloak?.authenticated))
         syncFromToken()
+        setReady(true)
       })
-      .finally(() => setReady(true))
+      .catch(() => {
+        if (cancelled) return
+        setAuthenticated(Boolean(keycloak?.authenticated))
+        syncFromToken()
+        setReady(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [syncFromToken])
 
   const handleLogin = useCallback(async (redirectUri?: string) => {

@@ -1,5 +1,5 @@
 import { Link, Navigate } from 'react-router-dom'
-import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { changeEmail, changePassword } from '../lib/keycloak'
 import {
@@ -18,6 +18,7 @@ import {
 import { PrimaryButton, DangerButton, GhostButton } from '../ui/Button'
 import { StatusMessage } from '../ui/Card'
 import { GlassInput } from '../ui/Input'
+import './account.css'
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -68,7 +69,6 @@ export function AccountPage() {
     } else if (status === 'cancelled') {
       setError(action === 'UPDATE_EMAIL' ? 'Смена email отменена.' : 'Смена пароля отменена.')
     }
-    // auth.refreshProfile is stable enough; avoid re-running on every auth change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -79,25 +79,26 @@ export function AccountPage() {
     }
 
     let cancelled = false
+    setLoading(true)
     void (async () => {
       try {
-        const data = await fetchAccount()
+        const [acc, me, push] = await Promise.all([
+          fetchAccount().catch(() => null),
+          fetchMe().catch(() => null),
+          getPushSettings().catch(() => null),
+        ])
         if (cancelled) return
-        setProfile(data)
-        setFirstName(data.firstName ?? '')
-        setLastName(data.lastName ?? '')
-        try {
-          const me = await fetchMe()
-          if (!cancelled) setNickname(me.nickname || auth.username || '')
-        } catch {
-          if (!cancelled && auth.username) setNickname(auth.username)
+        if (acc) {
+          setProfile(acc)
+          setFirstName(acc.firstName || '')
+          setLastName(acc.lastName || '')
         }
-        try {
-          const ps = await getPushSettings()
-          if (!cancelled) setPushEnabled(Boolean(ps.pushEnabled))
-        } catch {
-          /* ignore */
+        if (me) {
+          setNickname(me.nickname || auth.username || '')
+        } else if (auth.username) {
+          setNickname(auth.username)
         }
+        if (push) setPushEnabled(Boolean(push.enabled))
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Не удалось загрузить профиль')
@@ -110,7 +111,7 @@ export function AccountPage() {
     return () => {
       cancelled = true
     }
-  }, [auth.enabled, auth.ready, auth.authenticated])
+  }, [auth.enabled, auth.ready, auth.authenticated, auth.username])
 
   if (auth.enabled && auth.ready && !auth.authenticated) {
     return <Navigate to="/" replace />
@@ -131,7 +132,6 @@ export function AccountPage() {
         username: profile?.username,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        // Email меняется только через UPDATE_EMAIL AIA (письмо на новый адрес).
         email: profile?.email,
       }
       await updateAccount(next)
@@ -174,247 +174,145 @@ export function AccountPage() {
     }
   }
 
-  const sectionStyle: CSSProperties = {
-    padding: 28,
-    borderRadius: 16,
-    background: 'var(--voco-card)',
-    backdropFilter: 'blur(20px)',
-    border: '1px solid var(--voco-border-soft)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 16,
-  }
-
   return (
-    <div
-      className="fade-in-up"
-      style={{
-        position: 'relative',
-        zIndex: 1,
-        minHeight: '100vh',
-        padding: '32px 24px 80px',
-        maxWidth: 600,
-        margin: '0 auto',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 44, gap: 12 }}>
+    <div className="accountPage fade-in-up">
+      <div className="accountPage__top">
         <Link to="/" className="voco-nav-btn">
           ← На главную
         </Link>
       </div>
 
-      <h1
-        style={{
-          fontFamily: 'Outfit, sans-serif',
-          fontWeight: 600,
-          fontSize: 36,
-          color: 'var(--voco-text)',
-          letterSpacing: '-0.01em',
-          marginBottom: 40,
-        }}
-      >
-        Аккаунт
-      </h1>
+      <div className="accountPage__main">
+        <div className="accountPage__stack">
+          <h1 className="accountPage__title" style={{ fontSize: 28 }}>
+            Аккаунт
+          </h1>
 
-      {loading && <div className="authBoot" style={{ minHeight: 120 }}>Загрузка…</div>}
+          {loading && <div className="authBoot" style={{ minHeight: 120 }}>Загрузка…</div>}
 
-      {!loading && (
-        <>
-          <section style={{ marginBottom: 40 }}>
-            <SectionLabel>Профиль</SectionLabel>
-            <form style={sectionStyle} onSubmit={onSaveProfile}>
-              <div
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  background: 'var(--voco-chip-bg)',
-                  border: '1px solid var(--voco-border-soft)',
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: 'Outfit, sans-serif',
-                    fontSize: 11,
-                    color: 'var(--voco-text-faint)',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    margin: '0 0 4px',
-                  }}
-                >
-                  Логин
-                </p>
-                <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: 14, color: 'var(--voco-text-muted)', margin: 0 }}>
-                  {profile?.username ?? auth.username ?? '—'}
-                </p>
-              </div>
+          {!loading && (
+            <>
+              <form className="accountPage__card" onSubmit={onSaveProfile}>
+                <h2 className="accountPage__title">Профиль</h2>
+                <div className="accountPage__field">
+                  <span className="accountPage__label">Логин</span>
+                  <div className="accountPage__readonly">{profile?.username ?? auth.username ?? '—'}</div>
+                </div>
 
-              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <GlassInput
+                    label="Имя"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="flex-1"
+                    autoComplete="given-name"
+                  />
+                  <GlassInput
+                    label="Фамилия"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="flex-1"
+                    autoComplete="family-name"
+                  />
+                </div>
+
                 <GlassInput
-                  label="Имя"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="flex-1"
-                  autoComplete="given-name"
+                  label="Никнейм (логин)"
+                  value={auth.username || nickname}
+                  readOnly
+                  autoComplete="username"
                 />
-                <GlassInput
-                  label="Фамилия"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="flex-1"
-                  autoComplete="family-name"
-                />
-              </div>
+                <p className="accountPage__hint">Так вас будут видеть другие юзеры. Совпадает с логином.</p>
 
-              <GlassInput
-                label="Никнейм (логин)"
-                value={auth.username || nickname}
-                readOnly
-                autoComplete="username"
-              />
-              <p
-                style={{
-                  margin: '-4px 0 8px',
-                  fontFamily: 'Outfit, sans-serif',
-                  fontSize: 12,
-                  color: 'var(--voco-text-muted)',
-                  lineHeight: 1.4,
-                }}
-              >
-                Так вас будут видеть другие юзеры. Совпадает с логином.
-              </p>
+                {profileOk && <div className="accountPage__ok">{profileOk}</div>}
 
-              {profileOk && <StatusMessage type="success">{profileOk}</StatusMessage>}
+                <PrimaryButton type="submit" loading={profileBusy}>
+                  {profileBusy ? 'Сохраняю…' : 'Сохранить профиль'}
+                </PrimaryButton>
+              </form>
 
-              <PrimaryButton type="submit" loading={profileBusy}>
-                {profileBusy ? 'Сохраняю…' : 'Сохранить профиль'}
-              </PrimaryButton>
-            </form>
-          </section>
-
-          <section style={{ marginBottom: 40 }}>
-            <SectionLabel>Уведомления</SectionLabel>
-            <div style={sectionStyle}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                <span style={{ color: 'var(--voco-text)', fontSize: 14 }}>
-                  Browser push: {pushEnabled ? 'вкл' : 'выкл'}
-                </span>
-                <GhostButton
-                  type="button"
-                  onClick={() => {
-                    void (async () => {
-                      try {
-                        const next = !pushEnabled
-                        if (next) {
-                          const perm = await Notification.requestPermission()
-                          if (perm !== 'granted') throw new Error('Разрешение не выдано')
-                          const reg = await navigator.serviceWorker.register('/sw.js')
-                          const { publicKey } = await getVapidPublicKey()
-                          if (!publicKey) throw new Error('VAPID public key не настроен на сервере')
-                          const sub = await reg.pushManager.subscribe({
-                            userVisibleOnly: true,
-                            applicationServerKey: urlBase64ToUint8Array(publicKey),
-                          })
-                          await subscribePush(sub.toJSON())
-                          await setPushSettings(true)
-                          setPushEnabled(true)
-                        } else {
-                          await setPushSettings(false)
-                          setPushEnabled(false)
+              <div className="accountPage__card">
+                <h2 className="accountPage__title">Уведомления</h2>
+                <div className="accountPage__actions" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--voco-text)', fontSize: 14 }}>
+                    Browser push: {pushEnabled ? 'вкл' : 'выкл'}
+                  </span>
+                  <GhostButton
+                    type="button"
+                    onClick={() => {
+                      void (async () => {
+                        try {
+                          const next = !pushEnabled
+                          if (next) {
+                            const perm = await Notification.requestPermission()
+                            if (perm !== 'granted') throw new Error('Разрешение не выдано')
+                            const reg = await navigator.serviceWorker.register('/sw.js')
+                            const { publicKey } = await getVapidPublicKey()
+                            if (!publicKey) throw new Error('VAPID public key не настроен на сервере')
+                            const sub = await reg.pushManager.subscribe({
+                              userVisibleOnly: true,
+                              applicationServerKey: urlBase64ToUint8Array(publicKey),
+                            })
+                            await subscribePush(sub.toJSON())
+                            await setPushSettings(true)
+                            setPushEnabled(true)
+                          } else {
+                            await setPushSettings(false)
+                            setPushEnabled(false)
+                          }
+                        } catch (e) {
+                          setError(e instanceof Error ? e.message : 'Не удалось изменить push')
                         }
-                      } catch (e) {
-                        setError(e instanceof Error ? e.message : 'Не удалось изменить push')
-                      }
-                    })()
-                  }}
-                >
-                  {pushEnabled ? 'Выключить' : 'Включить'}
-                </GhostButton>
-              </div>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--voco-text-muted)' }}>
-                По умолчанию выключено. In-app toast работает при открытой вкладке через WebSocket.
-              </p>
-            </div>
-          </section>
-
-          <section style={{ marginBottom: 40 }}>
-            <SectionLabel>Email</SectionLabel>
-            <div style={sectionStyle}>
-              <div
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  background: 'var(--voco-chip-bg)',
-                  border: '1px solid var(--voco-border-soft)',
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: 'Outfit, sans-serif',
-                    fontSize: 11,
-                    color: 'var(--voco-text-faint)',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    margin: '0 0 4px',
-                  }}
-                >
-                  Текущий email
-                </p>
-                <p style={{ fontFamily: 'Outfit, sans-serif', fontSize: 14, color: 'var(--voco-text-muted)', margin: 0 }}>
-                  {profile?.email ?? '—'}
-                  {profile?.emailVerified === false ? ' (не подтверждён)' : ''}
+                      })()
+                    }}
+                  >
+                    {pushEnabled ? 'Выключить' : 'Включить'}
+                  </GhostButton>
+                </div>
+                <p className="accountPage__hint">
+                  По умолчанию выключено. In-app toast работает при открытой вкладке через WebSocket.
                 </p>
               </div>
-              {emailOk && <StatusMessage type="success">{emailOk}</StatusMessage>}
-              <PrimaryButton type="button" loading={emailBusy} onClick={() => void onChangeEmail()}>
-                {emailBusy ? 'Перехожу…' : 'Сменить email'}
-              </PrimaryButton>
-            </div>
-          </section>
 
-          <section style={{ marginBottom: 40 }}>
-            <SectionLabel>Смена пароля</SectionLabel>
-            <div style={sectionStyle}>
-              {passwordOk && <StatusMessage type="success">{passwordOk}</StatusMessage>}
-              <PrimaryButton type="button" loading={passwordBusy} onClick={() => void onChangePassword()}>
-                {passwordBusy ? 'Перехожу…' : 'Сменить пароль'}
-              </PrimaryButton>
-            </div>
-          </section>
+              <div className="accountPage__card">
+                <h2 className="accountPage__title">Email</h2>
+                <div className="accountPage__field">
+                  <span className="accountPage__label">Текущий email</span>
+                  <div className="accountPage__readonly">
+                    {profile?.email ?? '—'}
+                    {profile?.emailVerified === false ? ' (не подтверждён)' : ''}
+                  </div>
+                </div>
+                {emailOk && <div className="accountPage__ok">{emailOk}</div>}
+                <div className="accountPage__actions accountPage__actions--stack">
+                  <PrimaryButton type="button" loading={emailBusy} onClick={() => void onChangeEmail()}>
+                    {emailBusy ? 'Перехожу…' : 'Сменить email'}
+                  </PrimaryButton>
+                </div>
+              </div>
 
-          <section>
-            <SectionLabel>Сессия</SectionLabel>
-            <div style={sectionStyle}>
-              <DangerButton type="button" fullWidth onClick={() => void auth.logout()}>
-                Выйти
-              </DangerButton>
-            </div>
-          </section>
-        </>
-      )}
+              <div className="accountPage__card">
+                <h2 className="accountPage__title">Смена пароля</h2>
+                {passwordOk && <div className="accountPage__ok">{passwordOk}</div>}
+                <div className="accountPage__actions accountPage__actions--stack">
+                  <PrimaryButton type="button" loading={passwordBusy} onClick={() => void onChangePassword()}>
+                    {passwordBusy ? 'Перехожу…' : 'Сменить пароль'}
+                  </PrimaryButton>
+                </div>
+              </div>
 
-      {error && (
-        <div style={{ marginTop: 24 }}>
-          <StatusMessage type="error">{error}</StatusMessage>
+              <div className="accountPage__card">
+                <h2 className="accountPage__title">Сессия</h2>
+                <DangerButton type="button" fullWidth onClick={() => void auth.logout()}>
+                  Выйти
+                </DangerButton>
+              </div>
+            </>
+          )}
+
+          {error && <StatusMessage type="error">{error}</StatusMessage>}
         </div>
-      )}
+      </div>
     </div>
-  )
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      style={{
-        fontFamily: 'Outfit, sans-serif',
-        fontSize: 11,
-        fontWeight: 500,
-        letterSpacing: '0.12em',
-        color: 'var(--voco-text-faint)',
-        textTransform: 'uppercase',
-        marginBottom: 12,
-      }}
-    >
-      {children}
-    </p>
   )
 }

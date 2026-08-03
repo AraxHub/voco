@@ -9,6 +9,10 @@
   overscroll-behavior: none;
 }
 
+.appShell--guest {
+  grid-template-columns: 1fr;
+}
+
 .appShell__rail {
   display: flex;
   flex-direction: column;
@@ -132,7 +136,7 @@
 }
 
 @media (max-width: 900px) {
-  .appShell {
+  .appShell:not(.appShell--guest) {
     grid-template-columns: 1fr;
     padding-bottom: 64px;
   }

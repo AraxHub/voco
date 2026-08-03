@@ -288,7 +288,8 @@ SCOPE_ID="$(/opt/keycloak/bin/kcadm.sh get client-scopes -r "${KC_REALM}" -q nam
 if [ -n "${CLIENT_ID}" ]; then
   /opt/keycloak/bin/kcadm.sh update "clients/${CLIENT_ID}" -r "${KC_REALM}" \
     -s 'rootUrl=http://localhost:5173' \
-    -s 'baseUrl=/' >/dev/null 2>&1 \
+    -s 'baseUrl=/' \
+    -s 'redirectUris=["http://localhost:5173/*","http://127.0.0.1:5173/*","http://localhost:5173/silent-check-sso.html","http://127.0.0.1:5173/silent-check-sso.html"]' >/dev/null 2>&1 \
     && echo "keycloak setup: voco-frontend rootUrl=http://localhost:5173" \
     || echo "keycloak setup: voco-frontend rootUrl update skipped"
 fi

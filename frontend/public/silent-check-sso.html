@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>silent-check-sso</title>
+  </head>
+  <body>
+    <script>
+      // Keycloak JS silent SSO: notify parent of the auth callback URL.
+      parent.postMessage(window.location.href, window.location.origin)
+    </script>
+  </body>
+</html>

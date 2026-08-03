@@ -1,5 +1,6 @@
 import { NavLink, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { keycloak } from '../lib/keycloak'
 import './AppShell.css'
 
 const links = [
@@ -45,7 +46,9 @@ const links = [
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const auth = useAuth()
   if (!auth.ready) return <div className="authBoot">Загрузка…</div>
-  if (auth.enabled && !auth.authenticated) {
+  // Prefer live Keycloak instance — avoids a one-frame false negative after SSO restore.
+  const ok = auth.authenticated || Boolean(keycloak?.authenticated)
+  if (auth.enabled && !ok) {
     return <Navigate to="/" replace />
   }
   return <>{children}</>
@@ -54,6 +57,17 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 export function AppShell() {
   const auth = useAuth()
   const initials = (auth.displayName || auth.username || 'U').slice(0, 2).toUpperCase()
+  const showNav = auth.ready && (!auth.enabled || auth.authenticated)
+
+  if (!showNav) {
+    return (
+      <div className="appShell appShell--guest">
+        <main className="appShell__main">
+          <Outlet />
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="appShell">

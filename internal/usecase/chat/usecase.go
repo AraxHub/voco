@@ -68,12 +68,12 @@ type Config struct {
 }
 
 type Usecase struct {
-	store  Store
-	blobs  ports.BlobStore
-	rooms  RoomCreator
-	users  UserReader
-	rt     Realtime
-	cfg    Config
+	store Store
+	blobs ports.BlobStore
+	rooms RoomCreator
+	users UserReader
+	rt    Realtime
+	cfg   Config
 
 	callsMu sync.Mutex
 	calls   map[uuid.UUID]*pendingCall // roomID -> call
@@ -153,6 +153,7 @@ func (uc *Usecase) GetOrCreateDirect(ctx context.Context, me, peer domain.UserID
 	if err := uc.store.UpsertMessageRequest(ctx, req); err != nil {
 		return domain.Conversation{}, domain.MessageRequest{}, err
 	}
+	uc.publish(members, "conversation.created", c)
 	uc.publish(members, "conversation.updated", c)
 	uc.enrichConversationTitle(ctx, me, &c)
 	return c, req, nil
@@ -188,6 +189,7 @@ func (uc *Usecase) CreateGroup(ctx context.Context, me domain.UserID, title stri
 	if err := uc.store.CreateConversation(ctx, c, members); err != nil {
 		return domain.Conversation{}, err
 	}
+	uc.publish(members, "conversation.created", c)
 	uc.publish(members, "conversation.updated", c)
 	return c, nil
 }

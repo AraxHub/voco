@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	pgadapter "voco/internal/adapters/postgres"
@@ -56,6 +57,59 @@ func NewUserRepo(db *pgadapter.Client) *UserRepo {
 
 func (r *UserRepo) UpsertByKeycloakSub(ctx context.Context, sub, email, displayName, nickname string) (domain.User, error) {
 	now := time.Now().UTC()
+	nick := strings.TrimSpace(nickname)
+	candidates := uniqueNicknameCandidates(nick)
+
+	var lastErr error
+	for _, candidate := range candidates {
+		u, err := r.upsertByKeycloakSubOnce(ctx, sub, email, displayName, candidate, now)
+		if err == nil {
+			return u, nil
+		}
+		lastErr = err
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			// nickname (or rare race) taken — try next candidate
+			continue
+		}
+		return domain.User{}, err
+	}
+	if lastErr != nil {
+		return domain.User{}, fmt.Errorf("upsert user: %w", lastErr)
+	}
+	return domain.User{}, fmt.Errorf("upsert user: nickname unavailable")
+}
+
+func uniqueNicknameCandidates(base string) []string {
+	base = strings.TrimSpace(base)
+	out := make([]string, 0, 8)
+	if base != "" {
+		out = append(out, base)
+		for i := 2; i <= 6; i++ {
+			out = append(out, fmt.Sprintf("%s_%d", base, i))
+		}
+		out = append(out, fmt.Sprintf("%s_%s", truncateRunes(base, 48), uuid.New().String()[:8]))
+	} else {
+		out = append(out, "user_"+uuid.New().String()[:8])
+	}
+	return out
+}
+
+func truncateRunes(s string, max int) string {
+	if max <= 0 {
+		return ""
+	}
+	n := 0
+	for i := range s {
+		if n == max {
+			return s[:i]
+		}
+		n++
+	}
+	return s
+}
+
+func (r *UserRepo) upsertByKeycloakSubOnce(ctx context.Context, sub, email, displayName, nickname string, now time.Time) (domain.User, error) {
 	var u domain.User
 	insertCols := []string{
 		UserColID, UserColKeycloakSub, UserColNickname, UserColEmail, UserColDisplayName,
@@ -80,26 +134,7 @@ func (r *UserRepo) UpsertByKeycloakSub(ctx context.Context, sub, email, displayN
 		&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt,
 	)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" && nickname != "" {
-			// nickname taken — keep existing nickname, still upsert identity fields
-			q2 := "INSERT INTO " + UserTable + " (" + selectList("", insertCols) + ")" +
-				" VALUES ($1, $2, '', $3, $4, $5, $5, $5)" +
-				" ON CONFLICT (" + UserColKeycloakSub + ") DO UPDATE SET " +
-				UserColEmail + " = EXCLUDED." + UserColEmail + ", " +
-				UserColDisplayName + " = CASE WHEN EXCLUDED." + UserColDisplayName + " <> '' THEN EXCLUDED." + UserColDisplayName +
-				" ELSE " + UserTable + "." + UserColDisplayName + " END, " +
-				UserColUpdatedAt + " = EXCLUDED." + UserColUpdatedAt + ", " +
-				UserColLastSeenAt + " = EXCLUDED." + UserColLastSeenAt +
-				" RETURNING " + UserSelect("")
-			err = r.db.QueryRow(ctx, q2, uuid.New(), sub, email, displayName, now).Scan(
-				&u.ID, &u.KeycloakSub, &u.Nickname, &u.Email, &u.DisplayName, &u.AvatarBlobID,
-				&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt,
-			)
-		}
-	}
-	if err != nil {
-		return domain.User{}, fmt.Errorf("upsert user: %w", err)
+		return domain.User{}, err
 	}
 	return u, nil
 }

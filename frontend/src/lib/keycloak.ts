@@ -66,6 +66,7 @@ function syncThemeCookieForKeycloak() {
 }
 
 let initPromise: Promise<boolean> | null = null
+let initialized = false
 
 function hasOAuthCallback(): boolean {
   const hash = window.location.hash
@@ -82,13 +83,44 @@ function readOAuthHashError(): string | null {
   return desc ? `${err}: ${decodeURIComponent(desc.replace(/\+/g, ' '))}` : err
 }
 
+function isSilentSsoMiss(err: string | null): boolean {
+  if (!err) return false
+  return err === 'login_required' || err.startsWith('login_required:')
+}
+
+/** Drop check-sso noise (`#error=login_required`) without a full navigation. */
+function clearOAuthHash() {
+  if (!window.location.hash) return
+  const url = new URL(window.location.href)
+  url.hash = ''
+  window.history.replaceState(null, '', `${url.pathname}${url.search}`)
+}
+
+function attachTokenHandler() {
+  if (!keycloak) return
+  keycloak.onTokenExpired = () => {
+    void keycloak.updateToken(30)
+  }
+}
+
+/**
+ * Init Keycloak once per page lifetime. Safe under React StrictMode remounts:
+ * subsequent calls reuse the existing instance instead of calling `init()` again.
+ */
 export function initKeycloak(): Promise<boolean> {
   if (!keycloak) {
     return Promise.resolve(false)
   }
 
-  // After redirect from Keycloak the URL carries #code=… — must not reuse a stale init promise.
-  if (hasOAuthCallback()) {
+  if (initialized) {
+    if (isSilentSsoMiss(readOAuthHashError())) clearOAuthHash()
+    return Promise.resolve(Boolean(keycloak.authenticated))
+  }
+
+  // Actual login redirect carries #code= — allow a fresh init promise.
+  // #error=login_required from silent check-sso must NOT reset and re-init.
+  const oauthErr = readOAuthHashError()
+  if (hasOAuthCallback() && !isSilentSsoMiss(oauthErr) && window.location.hash.includes('code=')) {
     initPromise = null
   }
 
@@ -98,16 +130,23 @@ export function initKeycloak(): Promise<boolean> {
         onLoad: 'check-sso',
         pkceMethod: 'S256',
         checkLoginIframe: false,
+        // Keep the current route (e.g. /chats/:id) — without this, check-sso does a
+        // full-page prompt=none redirect and often lands on `/`.
+        silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+        silentCheckSsoFallback: false,
       })
       .then((authenticated) => {
-        const oauthErr = readOAuthHashError()
-        if (oauthErr) {
-          console.error('[voco] keycloak oauth error', oauthErr)
+        initialized = true
+        attachTokenHandler()
+        const err = readOAuthHashError()
+        if (isSilentSsoMiss(err)) {
+          clearOAuthHash()
           return false
         }
-
-        keycloak.onTokenExpired = () => {
-          void keycloak.updateToken(30)
+        if (err) {
+          console.error('[voco] keycloak oauth error', err)
+          clearOAuthHash()
+          return false
         }
         return authenticated
       }),
@@ -115,6 +154,14 @@ export function initKeycloak(): Promise<boolean> {
       window.setTimeout(() => reject(new Error('keycloak init timeout')), 10_000)
     }),
   ]).catch((err) => {
+    const msg = err instanceof Error ? err.message : String(err)
+    // Race / StrictMode: another init already won — treat as success if we have a session.
+    if (initialized || /initialized once/i.test(msg)) {
+      initialized = true
+      attachTokenHandler()
+      if (isSilentSsoMiss(readOAuthHashError())) clearOAuthHash()
+      return Boolean(keycloak?.authenticated)
+    }
     initPromise = null
     console.error('keycloak init failed', err)
     return false
