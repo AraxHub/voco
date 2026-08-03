@@ -63,3 +63,8 @@ tmp/
 
 # Local project documentation (not committed)
 docs/
+
+# Local agent / QA harness (never commit)
+.cursor/
+qa/
+
