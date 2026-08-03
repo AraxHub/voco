@@ -1,0 +1,74 @@
+.incomingCall {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, #0b0d12 72%, transparent);
+  backdrop-filter: blur(18px);
+  padding: 24px;
+}
+
+.incomingCall__pulse {
+  position: absolute;
+  width: min(70vw, 420px);
+  height: min(70vw, 420px);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--voco-accent) 35%, transparent), transparent 70%);
+  animation: incoming-pulse 1.6s ease-in-out infinite;
+}
+
+.incomingCall__card {
+  position: relative;
+  z-index: 1;
+  width: min(440px, 100%);
+  padding: 40px 28px 28px;
+  border-radius: 24px;
+  border: 1px solid var(--voco-border);
+  background: var(--voco-card);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.incomingCall__eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  color: var(--voco-text-muted);
+}
+
+.incomingCall__name {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 650;
+  color: var(--voco-text);
+}
+
+.incomingCall__timer {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--voco-text-muted);
+}
+
+.incomingCall__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@keyframes incoming-pulse {
+  0%,
+  100% {
+    transform: scale(0.85);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}

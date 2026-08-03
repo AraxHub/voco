@@ -131,6 +131,9 @@ func (uc *Usecase) Reschedule(ctx context.Context, me domain.UserID, id domain.E
 	if ev.OrganizerID != me {
 		return domain.CalendarEvent{}, domain.ErrForbidden
 	}
+	if ev.Status == domain.EventCancelled {
+		return domain.CalendarEvent{}, fmt.Errorf("%w: отменённую встречу нельзя переносить", domain.ErrValidation)
+	}
 	roomID := ev.RoomID
 	ev.StartsAt = starts.UTC()
 	ev.EndsAt = ends.UTC()

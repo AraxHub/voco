@@ -302,3 +302,15 @@ func (s *MemoryStore) UpdateConversationAvatar(_ context.Context, cid domain.Con
 	s.conversations[cid] = c
 	return nil
 }
+
+func (s *MemoryStore) UpdateConversationTitle(_ context.Context, cid domain.ConversationID, title string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	c, ok := s.conversations[cid]
+	if !ok {
+		return domain.ErrConversationNotFound
+	}
+	c.Title = title
+	s.conversations[cid] = c
+	return nil
+}

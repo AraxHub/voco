@@ -1,12 +1,12 @@
 import '@livekit/components-styles'
 import { LiveKitRoom, RoomAudioRenderer } from '@livekit/components-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AuthGate } from '../components/AuthGate'
 import { InCallLayout } from '../components/InCallLayout'
 import { PreJoinPreview } from '../components/PreJoinPreview'
 import { useAuth } from '../context/AuthContext'
-import { issueToken } from '../lib/api'
+import { cancelCall, issueToken, wsURL } from '../lib/api'
 import { allowGuestAccess, hasGuestAccess } from '../lib/guestSession'
 import { PrimaryButton, NavButton } from '../ui/Button'
 import { StatusMessage } from '../ui/Card'
@@ -17,12 +17,16 @@ type JoinState =
   | { phase: 'joining' }
   | { phase: 'joined'; token: string; livekitUrl: string }
   | { phase: 'error'; message: string }
+  | { phase: 'ended'; message: string }
 
 export function RoomPage() {
   const nav = useNavigate()
   const auth = useAuth()
   const { roomId } = useParams()
+  const [search] = useSearchParams()
   const id = (roomId || '').trim()
+  const autoJoin = search.get('join') === '1'
+  const awaitingPeer = search.get('awaiting') === '1'
 
   const [guestAllowed, setGuestAllowed] = useState(() => hasGuestAccess(id))
   const [name, setName] = useState('')
@@ -30,10 +34,13 @@ export function RoomPage() {
   const [micOn, setMicOn] = useState(true)
   const [joinState, setJoinState] = useState<JoinState>({ phase: 'prejoin' })
   const [chatOpen, setChatOpen] = useState(false)
+  const [awaitBanner, setAwaitBanner] = useState(awaitingPeer)
 
   const [previewStream, setPreviewStream] = useState<MediaStream | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const lastPresetNameRef = useRef<string | null>(null)
+  const autoJoinedRef = useRef(false)
+  const callActiveRef = useRef(awaitingPeer)
 
   const canJoin = useMemo(() => id.length > 0 && name.trim().length > 0, [id, name])
 
@@ -48,7 +55,6 @@ export function RoomPage() {
     const preset = auth.displayName || auth.username
     if (!auth.authenticated || !preset) return
     setName((prev) => {
-      // Fill empty field, or replace if user hasn't typed a custom name yet.
       if (!prev.trim() || prev === lastPresetNameRef.current) return preset
       return prev
     })
@@ -95,6 +101,9 @@ export function RoomPage() {
   useEffect(() => {
     return () => {
       stopPreview()
+      if (callActiveRef.current && id) {
+        void cancelCall(id).catch(() => undefined)
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -112,6 +121,52 @@ export function RoomPage() {
       setJoinState({ phase: 'error', message: e instanceof Error ? e.message : 'join failed' })
     }
   }
+
+  useEffect(() => {
+    if (!autoJoin || autoJoinedRef.current) return
+    if (!canJoin || showAuthGate) return
+    if (joinState.phase !== 'prejoin') return
+    autoJoinedRef.current = true
+    void onJoin()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoJoin, canJoin, showAuthGate, joinState.phase, name])
+
+  useEffect(() => {
+    if (!awaitingPeer || !auth.token || !id) return
+    let ws: WebSocket
+    try {
+      ws = new WebSocket(wsURL(auth.token))
+    } catch {
+      return
+    }
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(String(ev.data)) as { event?: string; payload?: { roomId?: string } }
+        if (!msg.event || msg.payload?.roomId !== id) return
+        if (msg.event === 'call.accepted') {
+          callActiveRef.current = false
+          setAwaitBanner(false)
+        }
+        if (msg.event === 'call.declined' || msg.event === 'call.missed' || msg.event === 'call.cancelled') {
+          callActiveRef.current = false
+          stopPreview()
+          setJoinState({
+            phase: 'ended',
+            message:
+              msg.event === 'call.declined'
+                ? 'Звонок отклонён'
+                : msg.event === 'call.missed'
+                  ? 'Нет ответа — звонок завершён'
+                  : 'Звонок отменён',
+          })
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    return () => ws.close()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingPeer, auth.token, id])
 
   function onContinueAsGuest() {
     allowGuestAccess(id)
@@ -149,9 +204,53 @@ export function RoomPage() {
     return <AuthGate mode="room" onGuest={onContinueAsGuest} />
   }
 
+  if (joinState.phase === 'ended') {
+    return (
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          gap: 16,
+          padding: 24,
+        }}
+      >
+        <StatusMessage type="error">{joinState.message}</StatusMessage>
+        <NavButton
+          onClick={() => {
+            callActiveRef.current = false
+            nav('/chats')
+          }}
+        >
+          К чатам
+        </NavButton>
+      </div>
+    )
+  }
+
   if (joinState.phase === 'joined') {
     return (
       <div style={{ position: 'relative', zIndex: 1, height: '100vh' }}>
+        {awaitBanner && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 5,
+              padding: '10px 16px',
+              borderRadius: 12,
+              background: 'var(--voco-card)',
+              border: '1px solid var(--voco-border)',
+              color: 'var(--voco-text)',
+            }}
+          >
+            Ожидаем ответа… (до 1 мин)
+          </div>
+        )}
         <LiveKitRoom
           token={joinState.token}
           serverUrl={joinState.livekitUrl}
@@ -162,6 +261,12 @@ export function RoomPage() {
             stopPreview()
             setCameraOn(false)
             setMicOn(false)
+            if (callActiveRef.current) {
+              void cancelCall(id).catch(() => undefined)
+              callActiveRef.current = false
+              setJoinState({ phase: 'ended', message: 'Звонок завершён' })
+              return
+            }
             setJoinState({ phase: 'prejoin' })
           }}
           data-lk-theme="default"
@@ -198,7 +303,13 @@ export function RoomPage() {
     >
       <NavButton
         type="button"
-        onClick={() => nav('/')}
+        onClick={() => {
+          if (callActiveRef.current) {
+            void cancelCall(id).catch(() => undefined)
+            callActiveRef.current = false
+          }
+          nav('/chats')
+        }}
         style={{ position: 'absolute', top: 28, left: 32 }}
       >
         ← Назад

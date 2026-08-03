@@ -95,7 +95,7 @@ func (a *App) Run() error {
 	})
 
 	chatRepo := pgrepo.NewChatRepo(db)
-	chatUC := chatuc.New(chatRepo, blobStore, roomsUC, hub, chatuc.Config{
+	chatUC := chatuc.New(chatRepo, blobStore, roomsUC, userRepo, hub, chatuc.Config{
 		MaxImageBytes: a.cfg.Features.MaxImageBytes,
 		MaxFileBytes:  a.cfg.Features.MaxFileBytes,
 	})

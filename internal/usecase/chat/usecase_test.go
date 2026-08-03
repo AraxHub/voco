@@ -23,10 +23,18 @@ func (r *roomStub) CreateRoom(context.Context, string, *domain.UserID) (domain.R
 	return domain.Room{ID: domain.NewRoomID(), Title: "Call"}, nil
 }
 
+func (r *roomStub) CloseRoom(context.Context, domain.RoomID) error { return nil }
+
+type userStub struct{}
+
+func (userStub) GetByID(_ context.Context, id domain.UserID) (domain.User, error) {
+	return domain.User{ID: id, Nickname: "nick", DisplayName: "Name"}, nil
+}
+
 func TestDirectAcceptBlockAndDeleteModes(t *testing.T) {
 	ctx := context.Background()
 	store := chat.NewMemoryStore()
-	uc := chat.New(store, blobmem.NewBlobStore(), &roomStub{}, noopRT{}, chat.Config{})
+	uc := chat.New(store, blobmem.NewBlobStore(), &roomStub{}, userStub{}, noopRT{}, chat.Config{})
 
 	a, b := uuid.New(), uuid.New()
 	c, req, err := uc.GetOrCreateDirect(ctx, a, b)
@@ -77,7 +85,7 @@ func TestDirectAcceptBlockAndDeleteModes(t *testing.T) {
 func TestGroupTitleAdminLeaveReact(t *testing.T) {
 	ctx := context.Background()
 	store := chat.NewMemoryStore()
-	uc := chat.New(store, blobmem.NewBlobStore(), &roomStub{}, noopRT{}, chat.Config{})
+	uc := chat.New(store, blobmem.NewBlobStore(), &roomStub{}, userStub{}, noopRT{}, chat.Config{})
 	admin, m1, m2 := uuid.New(), uuid.New(), uuid.New()
 
 	if _, err := uc.CreateGroup(ctx, admin, "", []domain.UserID{m1}, nil); !errors.Is(err, domain.ErrValidation) {

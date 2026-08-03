@@ -46,6 +46,20 @@ func (uc *RoomUsecase) CreateRoom(ctx context.Context, title string, owner *doma
 	return room, nil
 }
 
+func (uc *RoomUsecase) CloseRoom(ctx context.Context, id domain.RoomID) error {
+	room, ok, err := uc.store.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return nil
+	}
+	now := time.Now().UTC()
+	room.Status = domain.RoomStatusClosed
+	room.ClosedAt = now
+	return uc.store.Upsert(ctx, room, time.Hour)
+}
+
 func (uc *RoomUsecase) IssueToken(ctx context.Context, roomID domain.RoomID, participantName string, identity string) (string, string, error) {
 	room, ok, err := uc.store.Get(ctx, roomID)
 	if err != nil {

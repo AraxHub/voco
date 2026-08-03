@@ -2,6 +2,7 @@ package calendarctrl
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"voco/internal/api/http/middlewares"
@@ -40,6 +41,55 @@ func (c *Controller) me(ctx *gin.Context) (domain.User, bool) {
 	return u, ok
 }
 
+func userLabel(u domain.User) string {
+	if s := strings.TrimSpace(u.DisplayName); s != "" {
+		return s
+	}
+	if s := strings.TrimSpace(u.Nickname); s != "" {
+		return s
+	}
+	return u.ID.String()
+}
+
+func (c *Controller) eventJSON(ctx *gin.Context, ev domain.CalendarEvent) gin.H {
+	atts := make([]gin.H, 0, len(ev.Attendees))
+	for _, a := range ev.Attendees {
+		name := a.UserID.String()
+		if u, err := c.users.Me(ctx.Request.Context(), a.UserID); err == nil {
+			name = userLabel(u)
+		}
+		atts = append(atts, gin.H{
+			"userId": a.UserID,
+			"status": a.Status,
+			"name":   name,
+		})
+	}
+	var roomID any
+	var joinURL any
+	if ev.RoomID != nil {
+		roomID = ev.RoomID.String()
+		joinURL = "/room/" + ev.RoomID.String()
+	}
+	return gin.H{
+		"ID":          ev.ID,
+		"id":          ev.ID,
+		"OrganizerID": ev.OrganizerID,
+		"Title":       ev.Title,
+		"Description": ev.Description,
+		"StartsAt":    ev.StartsAt,
+		"EndsAt":      ev.EndsAt,
+		"Timezone":    ev.Timezone,
+		"Status":      ev.Status,
+		"RoomID":      roomID,
+		"roomId":      roomID,
+		"joinUrl":     joinURL,
+		"RRule":       ev.RRule,
+		"Attendees":   atts,
+		"attendees":   atts,
+		"Reminders":   ev.Reminders,
+	}
+}
+
 func (c *Controller) list(ctx *gin.Context) {
 	u, ok := c.me(ctx)
 	if !ok {
@@ -58,7 +108,11 @@ func (c *Controller) list(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, list)
+	out := make([]gin.H, 0, len(list))
+	for _, ev := range list {
+		out = append(out, c.eventJSON(ctx, ev))
+	}
+	ctx.JSON(http.StatusOK, out)
 }
 
 func (c *Controller) create(ctx *gin.Context) {
@@ -98,7 +152,7 @@ func (c *Controller) create(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, ev)
+	ctx.JSON(http.StatusOK, c.eventJSON(ctx, ev))
 }
 
 func (c *Controller) patch(ctx *gin.Context) {
@@ -123,7 +177,7 @@ func (c *Controller) patch(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, ev)
+	ctx.JSON(http.StatusOK, c.eventJSON(ctx, ev))
 }
 
 func (c *Controller) cancel(ctx *gin.Context) {
@@ -137,7 +191,7 @@ func (c *Controller) cancel(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, ev)
+	ctx.JSON(http.StatusOK, c.eventJSON(ctx, ev))
 }
 
 func (c *Controller) rsvp(ctx *gin.Context) {

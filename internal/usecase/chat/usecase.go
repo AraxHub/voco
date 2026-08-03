@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -24,6 +25,11 @@ type Realtime interface {
 
 type RoomCreator interface {
 	CreateRoom(ctx context.Context, title string, owner *domain.UserID) (domain.Room, error)
+	CloseRoom(ctx context.Context, id domain.RoomID) error
+}
+
+type UserReader interface {
+	GetByID(ctx context.Context, id domain.UserID) (domain.User, error)
 }
 
 type Store interface {
@@ -53,6 +59,7 @@ type Store interface {
 	SetRead(ctx context.Context, cid domain.ConversationID, userID domain.UserID, lastMessageID domain.MessageID, at time.Time) error
 	GetRead(ctx context.Context, cid domain.ConversationID, userID domain.UserID) (domain.MessageID, bool, error)
 	UpdateConversationAvatar(ctx context.Context, cid domain.ConversationID, blobID *domain.BlobID) error
+	UpdateConversationTitle(ctx context.Context, cid domain.ConversationID, title string) error
 }
 
 type Config struct {
@@ -64,18 +71,34 @@ type Usecase struct {
 	store  Store
 	blobs  ports.BlobStore
 	rooms  RoomCreator
+	users  UserReader
 	rt     Realtime
 	cfg    Config
+
+	callsMu sync.Mutex
+	calls   map[uuid.UUID]*pendingCall // roomID -> call
 }
 
-func New(store Store, blobs ports.BlobStore, rooms RoomCreator, rt Realtime, cfg Config) *Usecase {
+type pendingCall struct {
+	RoomID         domain.RoomID
+	ConversationID domain.ConversationID
+	CallerID       domain.UserID
+	CalleeID       domain.UserID
+	ExpiresAt      time.Time
+	done           bool
+}
+
+func New(store Store, blobs ports.BlobStore, rooms RoomCreator, users UserReader, rt Realtime, cfg Config) *Usecase {
 	if cfg.MaxImageBytes <= 0 {
 		cfg.MaxImageBytes = 10 << 20
 	}
 	if cfg.MaxFileBytes <= 0 {
 		cfg.MaxFileBytes = 25 << 20
 	}
-	return &Usecase{store: store, blobs: blobs, rooms: rooms, rt: rt, cfg: cfg}
+	return &Usecase{
+		store: store, blobs: blobs, rooms: rooms, users: users, rt: rt, cfg: cfg,
+		calls: map[uuid.UUID]*pendingCall{},
+	}
 }
 
 func orderedPair(a, b domain.UserID) (domain.UserID, domain.UserID) {
@@ -105,6 +128,7 @@ func (uc *Usecase) GetOrCreateDirect(ctx context.Context, me, peer domain.UserID
 			return domain.Conversation{}, domain.MessageRequest{}, err
 		}
 		req, _, _ := uc.store.GetMessageRequest(ctx, cid)
+		uc.enrichConversationTitle(ctx, me, &c)
 		return c, req, nil
 	}
 
@@ -130,6 +154,7 @@ func (uc *Usecase) GetOrCreateDirect(ctx context.Context, me, peer domain.UserID
 		return domain.Conversation{}, domain.MessageRequest{}, err
 	}
 	uc.publish(members, "conversation.updated", c)
+	uc.enrichConversationTitle(ctx, me, &c)
 	return c, req, nil
 }
 
@@ -194,6 +219,129 @@ func (uc *Usecase) Leave(ctx context.Context, me domain.UserID, cid domain.Conve
 		return domain.ErrNotFound
 	}
 	return uc.store.MarkLeft(ctx, cid, me, time.Now().UTC())
+}
+
+type MemberInfo struct {
+	UserID      domain.UserID
+	Role        domain.MemberRole
+	JoinedAt    time.Time
+	LeftAt      *time.Time
+	Nickname    string
+	DisplayName string
+}
+
+func (uc *Usecase) ListMembers(ctx context.Context, me domain.UserID, cid domain.ConversationID) ([]MemberInfo, error) {
+	if _, ok, err := uc.store.GetMember(ctx, cid, me); err != nil || !ok {
+		return nil, domain.ErrForbidden
+	}
+	members, err := uc.store.ListMembers(ctx, cid)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]MemberInfo, 0, len(members))
+	for _, m := range members {
+		if m.LeftAt != nil {
+			continue
+		}
+		info := MemberInfo{UserID: m.UserID, Role: m.Role, JoinedAt: m.JoinedAt, LeftAt: m.LeftAt}
+		if uc.users != nil {
+			if u, err := uc.users.GetByID(ctx, m.UserID); err == nil {
+				info.Nickname = u.Nickname
+				info.DisplayName = u.DisplayName
+			}
+		}
+		out = append(out, info)
+	}
+	return out, nil
+}
+
+func (uc *Usecase) AddGroupMember(ctx context.Context, me, target domain.UserID, cid domain.ConversationID) error {
+	if me == target {
+		return domain.ErrValidation
+	}
+	c, err := uc.store.GetConversation(ctx, cid)
+	if err != nil {
+		return err
+	}
+	if c.Type != domain.ConversationGroup {
+		return domain.ErrValidation
+	}
+	admin, ok, err := uc.store.GetMember(ctx, cid, me)
+	if err != nil || !ok || admin.LeftAt != nil || admin.Role != domain.RoleAdmin {
+		return domain.ErrForbidden
+	}
+	existing, ok, err := uc.store.GetMember(ctx, cid, target)
+	if err != nil {
+		return err
+	}
+	now := time.Now().UTC()
+	if ok && existing.LeftAt == nil {
+		return nil
+	}
+	members, err := uc.store.ListMembers(ctx, cid)
+	if err != nil {
+		return err
+	}
+	active := 0
+	for _, m := range members {
+		if m.LeftAt == nil {
+			active++
+		}
+	}
+	if active >= MaxGroupMembers {
+		return domain.ErrValidation
+	}
+	if err := uc.store.AddMember(ctx, domain.ConversationMember{
+		ConversationID: cid, UserID: target, Role: domain.RoleMember, JoinedAt: now,
+	}); err != nil {
+		return err
+	}
+	members, _ = uc.store.ListMembers(ctx, cid)
+	uc.publish(members, "conversation.updated", map[string]any{"id": cid, "added": target})
+	return nil
+}
+
+func (uc *Usecase) RenameGroup(ctx context.Context, me domain.UserID, cid domain.ConversationID, title string) error {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return fmt.Errorf("%w: укажите название группы", domain.ErrValidation)
+	}
+	c, err := uc.store.GetConversation(ctx, cid)
+	if err != nil {
+		return err
+	}
+	if c.Type != domain.ConversationGroup {
+		return domain.ErrValidation
+	}
+	admin, ok, err := uc.store.GetMember(ctx, cid, me)
+	if err != nil || !ok || admin.LeftAt != nil || admin.Role != domain.RoleAdmin {
+		return domain.ErrForbidden
+	}
+	if err := uc.store.UpdateConversationTitle(ctx, cid, title); err != nil {
+		return err
+	}
+	members, _ := uc.store.ListMembers(ctx, cid)
+	uc.publish(members, "conversation.updated", map[string]any{"id": cid, "title": title})
+	return nil
+}
+
+// GetIncomingPendingRequest returns a pending message request addressed to me, if any.
+func (uc *Usecase) GetIncomingPendingRequest(ctx context.Context, me domain.UserID, cid domain.ConversationID) (domain.MessageRequest, bool, error) {
+	m, ok, err := uc.store.GetMember(ctx, cid, me)
+	if err != nil {
+		return domain.MessageRequest{}, false, err
+	}
+	if !ok || m.LeftAt != nil {
+		return domain.MessageRequest{}, false, domain.ErrForbidden
+	}
+	req, ok, err := uc.store.GetMessageRequest(ctx, cid)
+	if err != nil || !ok {
+		return domain.MessageRequest{}, false, err
+	}
+	if req.ToUserID != me || req.Status != domain.MessageRequestPending {
+		return domain.MessageRequest{}, false, nil
+	}
+	return req, true, nil
 }
 
 func (uc *Usecase) AcceptRequest(ctx context.Context, me domain.UserID, cid domain.ConversationID) error {
@@ -447,31 +595,221 @@ func (uc *Usecase) Typing(ctx context.Context, me domain.UserID, cid domain.Conv
 	return nil
 }
 
-func (uc *Usecase) CallFromChat(ctx context.Context, me domain.UserID, cid domain.ConversationID) (domain.Room, error) {
+func (uc *Usecase) CallFromChat(ctx context.Context, me domain.UserID, cid domain.ConversationID) (domain.Room, time.Time, error) {
 	c, err := uc.store.GetConversation(ctx, cid)
 	if err != nil {
-		return domain.Room{}, err
+		return domain.Room{}, time.Time{}, err
 	}
 	if c.Type != domain.ConversationDirect {
-		return domain.Room{}, domain.ErrValidation
+		return domain.Room{}, time.Time{}, domain.ErrValidation
 	}
 	if err := uc.ensureCanWrite(ctx, me, cid); err != nil && err != domain.ErrMessageRequestPending {
-		// allow call if accepted or pending sender
 		req, ok, _ := uc.store.GetMessageRequest(ctx, cid)
 		if ok && req.Status == domain.MessageRequestBlocked {
-			return domain.Room{}, domain.ErrBlocked
+			return domain.Room{}, time.Time{}, domain.ErrBlocked
 		}
 		if err == domain.ErrBlocked {
-			return domain.Room{}, err
+			return domain.Room{}, time.Time{}, err
 		}
 	}
-	title := "Call"
+	members, err := uc.store.ListMembers(ctx, cid)
+	if err != nil {
+		return domain.Room{}, time.Time{}, err
+	}
+	var peer domain.UserID
+	for _, m := range members {
+		if m.LeftAt == nil && m.UserID != me {
+			peer = m.UserID
+			break
+		}
+	}
+	if peer == uuid.Nil {
+		return domain.Room{}, time.Time{}, domain.ErrNotFound
+	}
+
+	callerName := "Абонент"
+	if uc.users != nil {
+		if u, err := uc.users.GetByID(ctx, me); err == nil {
+			callerName = userLabel(u)
+		}
+	}
+
+	title := "Звонок · " + callerName
 	owner := me
-	return uc.rooms.CreateRoom(ctx, title, &owner)
+	room, err := uc.rooms.CreateRoom(ctx, title, &owner)
+	if err != nil {
+		return domain.Room{}, time.Time{}, err
+	}
+
+	expires := time.Now().UTC().Add(time.Minute)
+	pc := &pendingCall{
+		RoomID: room.ID, ConversationID: cid,
+		CallerID: me, CalleeID: peer, ExpiresAt: expires,
+	}
+	uc.callsMu.Lock()
+	uc.calls[room.ID.UUID()] = pc
+	uc.callsMu.Unlock()
+
+	payload := map[string]any{
+		"roomId":         room.ID.String(),
+		"conversationId": cid.String(),
+		"callerId":       me.String(),
+		"callerName":     callerName,
+		"expiresAt":      expires,
+	}
+	uc.publishUsers([]domain.UserID{peer}, "call.incoming", payload)
+	uc.publishUsers([]domain.UserID{me}, "call.outgoing", payload)
+
+	go uc.watchCallTimeout(room.ID.UUID())
+
+	return room, expires, nil
+}
+
+func (uc *Usecase) publishUsers(ids []domain.UserID, event string, payload any) {
+	if uc.rt == nil {
+		return
+	}
+	uc.rt.PublishToUsers(ids, event, payload)
+}
+
+func (uc *Usecase) watchCallTimeout(roomUUID uuid.UUID) {
+	uc.callsMu.Lock()
+	pc := uc.calls[roomUUID]
+	uc.callsMu.Unlock()
+	if pc == nil {
+		return
+	}
+	wait := time.Until(pc.ExpiresAt)
+	if wait < 0 {
+		wait = 0
+	}
+	time.Sleep(wait)
+
+	uc.callsMu.Lock()
+	pc = uc.calls[roomUUID]
+	if pc == nil || pc.done {
+		uc.callsMu.Unlock()
+		return
+	}
+	pc.done = true
+	delete(uc.calls, roomUUID)
+	caller, callee := pc.CallerID, pc.CalleeID
+	roomID := pc.RoomID
+	uc.callsMu.Unlock()
+
+	_ = uc.rooms.CloseRoom(context.Background(), roomID)
+	payload := map[string]any{"roomId": roomID.String(), "reason": "timeout"}
+	uc.publishUsers([]domain.UserID{caller, callee}, "call.missed", payload)
+}
+
+func (uc *Usecase) AcceptCall(ctx context.Context, me domain.UserID, roomID domain.RoomID) error {
+	uc.callsMu.Lock()
+	pc := uc.calls[roomID.UUID()]
+	if pc == nil || pc.done {
+		uc.callsMu.Unlock()
+		return domain.ErrNotFound
+	}
+	if pc.CalleeID != me {
+		uc.callsMu.Unlock()
+		return domain.ErrForbidden
+	}
+	pc.done = true
+	delete(uc.calls, roomID.UUID())
+	caller := pc.CallerID
+	uc.callsMu.Unlock()
+
+	uc.publishUsers([]domain.UserID{caller, me}, "call.accepted", map[string]any{
+		"roomId": roomID.String(),
+	})
+	return nil
+}
+
+func (uc *Usecase) DeclineCall(ctx context.Context, me domain.UserID, roomID domain.RoomID) error {
+	uc.callsMu.Lock()
+	pc := uc.calls[roomID.UUID()]
+	if pc == nil || pc.done {
+		uc.callsMu.Unlock()
+		return domain.ErrNotFound
+	}
+	if pc.CalleeID != me {
+		uc.callsMu.Unlock()
+		return domain.ErrForbidden
+	}
+	pc.done = true
+	delete(uc.calls, roomID.UUID())
+	caller := pc.CallerID
+	uc.callsMu.Unlock()
+
+	_ = uc.rooms.CloseRoom(ctx, roomID)
+	uc.publishUsers([]domain.UserID{caller, me}, "call.declined", map[string]any{
+		"roomId": roomID.String(),
+	})
+	return nil
+}
+
+func (uc *Usecase) CancelCall(ctx context.Context, me domain.UserID, roomID domain.RoomID) error {
+	uc.callsMu.Lock()
+	pc := uc.calls[roomID.UUID()]
+	if pc == nil || pc.done {
+		uc.callsMu.Unlock()
+		return domain.ErrNotFound
+	}
+	if pc.CallerID != me {
+		uc.callsMu.Unlock()
+		return domain.ErrForbidden
+	}
+	pc.done = true
+	delete(uc.calls, roomID.UUID())
+	callee := pc.CalleeID
+	uc.callsMu.Unlock()
+
+	_ = uc.rooms.CloseRoom(ctx, roomID)
+	uc.publishUsers([]domain.UserID{me, callee}, "call.cancelled", map[string]any{
+		"roomId": roomID.String(),
+	})
+	return nil
+}
+
+func userLabel(u domain.User) string {
+	if s := strings.TrimSpace(u.DisplayName); s != "" {
+		return s
+	}
+	if s := strings.TrimSpace(u.Nickname); s != "" {
+		return s
+	}
+	return "Чат"
+}
+
+func (uc *Usecase) enrichConversationTitle(ctx context.Context, me domain.UserID, c *domain.Conversation) {
+	if c == nil || c.Type != domain.ConversationDirect || uc.users == nil {
+		return
+	}
+	members, err := uc.store.ListMembers(ctx, c.ID)
+	if err != nil {
+		return
+	}
+	for _, m := range members {
+		if m.LeftAt != nil || m.UserID == me {
+			continue
+		}
+		u, err := uc.users.GetByID(ctx, m.UserID)
+		if err != nil {
+			return
+		}
+		c.Title = userLabel(u)
+		return
+	}
 }
 
 func (uc *Usecase) ListConversations(ctx context.Context, me domain.UserID) ([]domain.Conversation, error) {
-	return uc.store.ListConversationsForUser(ctx, me)
+	list, err := uc.store.ListConversationsForUser(ctx, me)
+	if err != nil {
+		return nil, err
+	}
+	for i := range list {
+		uc.enrichConversationTitle(ctx, me, &list[i])
+	}
+	return list, nil
 }
 
 func (uc *Usecase) ListMessages(ctx context.Context, me domain.UserID, cid domain.ConversationID, limit int) ([]domain.Message, error) {

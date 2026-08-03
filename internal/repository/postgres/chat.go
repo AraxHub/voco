@@ -648,3 +648,10 @@ func (r *ChatRepo) UpdateConversationAvatar(ctx context.Context, cid domain.Conv
 		cid, blobID)
 	return err
 }
+
+func (r *ChatRepo) UpdateConversationTitle(ctx context.Context, cid domain.ConversationID, title string) error {
+	_, err := r.db.Exec(ctx,
+		"UPDATE "+ConversationTable+" SET "+ConversationColTitle+" = $2 WHERE "+ConversationColID+" = $1",
+		cid, title)
+	return err
+}

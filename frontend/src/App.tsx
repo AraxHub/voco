@@ -2,18 +2,22 @@ import './App.css'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { FuturisticBackground } from './components/FuturisticBackground'
 import { ThemeToggle } from './components/ThemeToggle'
+import { IncomingCallHost } from './components/IncomingCallOverlay'
 import { AppShell, RequireAuth } from './components/AppShell'
 import { AccountPage } from './pages/AccountPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { ChatsPage } from './pages/ChatsPage'
 import { HomePage } from './pages/HomePage'
 import { RoomPage } from './pages/RoomPage'
+import { useAuth } from './context/AuthContext'
 
 function App() {
+  const auth = useAuth()
   return (
     <>
       <FuturisticBackground />
       <ThemeToggle className="themeToggle--fixed" />
+      {auth.authenticated && <IncomingCallHost />}
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/" element={<HomePage />} />

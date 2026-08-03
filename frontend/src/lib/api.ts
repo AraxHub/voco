@@ -26,11 +26,21 @@ export type Conversation = {
   CreatedBy: string
 }
 
+export type ConversationMember = {
+  userId: string
+  role: string
+  nickname?: string
+  displayName?: string
+  name: string
+}
+
 export type Message = {
   ID: string
   id?: string
   ConversationID: string
   SenderID: string
+  senderId?: string
+  senderName?: string
   Body: string
   CreatedAt: string
   EditedAt?: string
@@ -38,16 +48,27 @@ export type Message = {
   Reactions?: { Emoji: string; UserID: string }[]
 }
 
+export type CalendarAttendee = {
+  userId: string
+  status: string
+  name: string
+}
+
 export type CalendarEvent = {
   ID: string
+  id?: string
   Title: string
   Description: string
   StartsAt: string
   EndsAt: string
   Status: string
   RoomID?: string
+  roomId?: string
+  joinUrl?: string
   Timezone: string
   RRule?: string
+  Attendees?: CalendarAttendee[]
+  attendees?: CalendarAttendee[]
 }
 
 function authHeaders(token?: string): HeadersInit {
@@ -135,10 +156,43 @@ export async function openDirect(userId: string): Promise<{ conversation: Conver
   })
 }
 
+export type ConversationRequestState = {
+  incomingPending: boolean
+  request?: {
+    conversationId: string
+    fromUserId: string
+    toUserId: string
+    status: string
+    createdAt: string
+  }
+}
+
+export async function getConversationRequest(conversationId: string): Promise<ConversationRequestState> {
+  return http(`/api/v1/conversations/${conversationId}/request`)
+}
+
 export async function createGroup(title: string, memberIds: string[]): Promise<Conversation> {
   return http('/api/v1/conversations/groups', {
     method: 'POST',
     body: JSON.stringify({ title, memberIds }),
+  })
+}
+
+export async function listMembers(conversationId: string): Promise<ConversationMember[]> {
+  return http(`/api/v1/conversations/${conversationId}/members`)
+}
+
+export async function addGroupMember(conversationId: string, userId: string): Promise<void> {
+  return http(`/api/v1/conversations/${conversationId}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ userId }),
+  })
+}
+
+export async function renameGroup(conversationId: string, title: string): Promise<void> {
+  return http(`/api/v1/conversations/${conversationId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ title }),
   })
 }
 
@@ -161,8 +215,24 @@ export async function blockRequest(conversationId: string): Promise<void> {
   return http(`/api/v1/conversations/${conversationId}/request/block`, { method: 'POST' })
 }
 
-export async function callFromChat(conversationId: string): Promise<{ roomId: string; joinUrl: string }> {
+export async function callFromChat(conversationId: string): Promise<{
+  roomId: string
+  joinUrl: string
+  expiresAt: string
+}> {
   return http(`/api/v1/conversations/${conversationId}/call`, { method: 'POST' })
+}
+
+export async function acceptCall(roomId: string): Promise<void> {
+  return http(`/api/v1/calls/${roomId}/accept`, { method: 'POST' })
+}
+
+export async function declineCall(roomId: string): Promise<void> {
+  return http(`/api/v1/calls/${roomId}/decline`, { method: 'POST' })
+}
+
+export async function cancelCall(roomId: string): Promise<void> {
+  return http(`/api/v1/calls/${roomId}/cancel`, { method: 'POST' })
 }
 
 export async function listEvents(from: string, to: string): Promise<CalendarEvent[]> {

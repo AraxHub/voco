@@ -15,6 +15,13 @@
   "verifyEmail": true,
   "editUsernameAllowed": false,
   "bruteForceProtected": false,
+  "ssoSessionIdleTimeout": 2592000,
+  "ssoSessionMaxLifespan": 31536000,
+  "clientSessionIdleTimeout": 2592000,
+  "clientSessionMaxLifespan": 31536000,
+  "accessTokenLifespan": 900,
+  "accessTokenLifespanForImplicitFlow": 900,
+  "offlineSessionIdleTimeout": 2592000,
   "clients": [
     {
       "clientId": "voco-frontend",

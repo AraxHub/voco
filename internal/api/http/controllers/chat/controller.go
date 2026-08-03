@@ -29,6 +29,9 @@ func (c *Controller) RegisterRoutes(r *gin.Engine, mw middlewares.MW) {
 	api.GET("/conversations", c.list)
 	api.POST("/conversations/direct", c.direct)
 	api.POST("/conversations/groups", c.group)
+	api.GET("/conversations/:id/members", c.members)
+	api.POST("/conversations/:id/members", c.addMember)
+	api.PATCH("/conversations/:id", c.patchConversation)
 	api.POST("/conversations/:id/leave", c.leave)
 	api.POST("/conversations/:id/admins", c.promote)
 	api.GET("/conversations/:id/messages", c.messages)
@@ -38,9 +41,13 @@ func (c *Controller) RegisterRoutes(r *gin.Engine, mw middlewares.MW) {
 	api.POST("/conversations/:id/messages/:mid/reactions", c.react)
 	api.POST("/conversations/:id/read", c.read)
 	api.POST("/conversations/:id/typing", c.typing)
+	api.GET("/conversations/:id/request", c.getRequest)
 	api.POST("/conversations/:id/request/accept", c.accept)
 	api.POST("/conversations/:id/request/block", c.blockReq)
 	api.POST("/conversations/:id/call", c.call)
+	api.POST("/calls/:roomId/accept", c.acceptCall)
+	api.POST("/calls/:roomId/decline", c.declineCall)
+	api.POST("/calls/:roomId/cancel", c.cancelCall)
 	api.POST("/users/:id/block", c.blockUser)
 	api.DELETE("/users/:id/block", c.unblockUser)
 }
@@ -120,6 +127,94 @@ func (c *Controller) group(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, conv)
 }
 
+func (c *Controller) members(ctx *gin.Context) {
+	u, ok := c.me(ctx)
+	if !ok {
+		return
+	}
+	cid, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	list, err := c.uc.ListMembers(ctx.Request.Context(), u.ID, cid)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	out := make([]gin.H, 0, len(list))
+	for _, m := range list {
+		name := strings.TrimSpace(m.DisplayName)
+		if name == "" {
+			name = strings.TrimSpace(m.Nickname)
+		}
+		if name == "" {
+			name = m.UserID.String()
+		}
+		out = append(out, gin.H{
+			"userId":      m.UserID,
+			"role":        m.Role,
+			"nickname":    m.Nickname,
+			"displayName": m.DisplayName,
+			"name":        name,
+		})
+	}
+	ctx.JSON(http.StatusOK, out)
+}
+
+func (c *Controller) addMember(ctx *gin.Context) {
+	u, ok := c.me(ctx)
+	if !ok {
+		return
+	}
+	cid, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	var req struct {
+		UserID string `json:"userId"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	target, err := uuid.Parse(req.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid userId"})
+		return
+	}
+	if err := c.uc.AddGroupMember(ctx.Request.Context(), u.ID, target, cid); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.Status(http.StatusNoContent)
+}
+
+func (c *Controller) patchConversation(ctx *gin.Context) {
+	u, ok := c.me(ctx)
+	if !ok {
+		return
+	}
+	cid, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	var req struct {
+		Title string `json:"title"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := c.uc.RenameGroup(ctx.Request.Context(), u.ID, cid, req.Title); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.Status(http.StatusNoContent)
+}
+
 func (c *Controller) leave(ctx *gin.Context) {
 	u, ok := c.me(ctx)
 	if !ok {
@@ -170,7 +265,35 @@ func (c *Controller) messages(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, list)
+	members, _ := c.uc.ListMembers(ctx.Request.Context(), u.ID, cid)
+	names := map[uuid.UUID]string{}
+	for _, m := range members {
+		name := strings.TrimSpace(m.DisplayName)
+		if name == "" {
+			name = strings.TrimSpace(m.Nickname)
+		}
+		if name == "" {
+			name = "Участник"
+		}
+		names[m.UserID] = name
+	}
+	out := make([]gin.H, 0, len(list))
+	for _, m := range list {
+		out = append(out, gin.H{
+			"ID":              m.ID,
+			"id":              m.ID,
+			"ConversationID":  m.ConversationID,
+			"SenderID":        m.SenderID,
+			"senderId":        m.SenderID,
+			"senderName":      names[m.SenderID],
+			"Body":            m.Body,
+			"CreatedAt":       m.CreatedAt,
+			"EditedAt":        m.EditedAt,
+			"DeletedForAllAt": m.DeletedForAllAt,
+			"Reactions":       m.Reactions,
+		})
+	}
+	ctx.JSON(http.StatusOK, out)
 }
 
 func (c *Controller) send(ctx *gin.Context) {
@@ -214,7 +337,23 @@ func (c *Controller) send(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, msg)
+	senderName := "Участник"
+	if meUser, err := c.users.Me(ctx.Request.Context(), u.ID); err == nil {
+		if s := strings.TrimSpace(meUser.DisplayName); s != "" {
+			senderName = s
+		} else if s := strings.TrimSpace(meUser.Nickname); s != "" {
+			senderName = s
+		}
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"ID": msg.ID, "id": msg.ID,
+		"ConversationID": msg.ConversationID,
+		"SenderID": msg.SenderID, "senderId": msg.SenderID,
+		"senderName": senderName,
+		"Body": msg.Body, "CreatedAt": msg.CreatedAt,
+		"EditedAt": msg.EditedAt, "DeletedForAllAt": msg.DeletedForAllAt,
+		"Reactions": msg.Reactions,
+	})
 }
 
 func (c *Controller) edit(ctx *gin.Context) {
@@ -295,6 +434,37 @@ func (c *Controller) typing(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
+func (c *Controller) getRequest(ctx *gin.Context) {
+	u, ok := c.me(ctx)
+	if !ok {
+		return
+	}
+	cid, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	req, found, err := c.uc.GetIncomingPendingRequest(ctx.Request.Context(), u.ID, cid)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if !found {
+		ctx.JSON(http.StatusOK, gin.H{"incomingPending": false})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"incomingPending": true,
+		"request": gin.H{
+			"conversationId": req.ConversationID,
+			"fromUserId":     req.FromUserID,
+			"toUserId":       req.ToUserID,
+			"status":         req.Status,
+			"createdAt":      req.CreatedAt,
+		},
+	})
+}
+
 func (c *Controller) accept(ctx *gin.Context) {
 	u, ok := c.me(ctx)
 	if !ok {
@@ -327,13 +497,68 @@ func (c *Controller) call(ctx *gin.Context) {
 		return
 	}
 	cid, _ := uuid.Parse(ctx.Param("id"))
-	room, err := c.uc.CallFromChat(ctx.Request.Context(), u.ID, cid)
+	room, expires, err := c.uc.CallFromChat(ctx.Request.Context(), u.ID, cid)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	base := strings.TrimRight(c.baseURL, "/")
-	ctx.JSON(http.StatusOK, gin.H{"roomId": room.ID.String(), "joinUrl": base + "/room/" + room.ID.String()})
+	ctx.JSON(http.StatusOK, gin.H{
+		"roomId":    room.ID.String(),
+		"joinUrl":   base + "/room/" + room.ID.String(),
+		"expiresAt": expires,
+	})
+}
+
+func (c *Controller) acceptCall(ctx *gin.Context) {
+	u, ok := c.me(ctx)
+	if !ok {
+		return
+	}
+	rid, err := domain.ParseRoomID(ctx.Param("roomId"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid roomId"})
+		return
+	}
+	if err := c.uc.AcceptCall(ctx.Request.Context(), u.ID, rid); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.Status(http.StatusNoContent)
+}
+
+func (c *Controller) declineCall(ctx *gin.Context) {
+	u, ok := c.me(ctx)
+	if !ok {
+		return
+	}
+	rid, err := domain.ParseRoomID(ctx.Param("roomId"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid roomId"})
+		return
+	}
+	if err := c.uc.DeclineCall(ctx.Request.Context(), u.ID, rid); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.Status(http.StatusNoContent)
+}
+
+func (c *Controller) cancelCall(ctx *gin.Context) {
+	u, ok := c.me(ctx)
+	if !ok {
+		return
+	}
+	rid, err := domain.ParseRoomID(ctx.Param("roomId"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid roomId"})
+		return
+	}
+	if err := c.uc.CancelCall(ctx.Request.Context(), u.ID, rid); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.Status(http.StatusNoContent)
 }
 
 func (c *Controller) blockUser(ctx *gin.Context) {

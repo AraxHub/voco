@@ -68,6 +68,19 @@ echo "${SMTP_JSON}" >/tmp/voco-realm-smtp.json
 /opt/keycloak/bin/kcadm.sh update "realms/${KC_REALM}" -f /tmp/voco-realm-smtp.json
 rm -f /tmp/voco-realm-smtp.json
 
+# Long-lived SSO: stay signed in unless idle 30 days (see docs/session-keycloak.md).
+# Keycloak defaults are ~30 minutes — without this, overnight re-login is expected.
+/opt/keycloak/bin/kcadm.sh update "realms/${KC_REALM}" \
+  -s ssoSessionIdleTimeout=2592000 \
+  -s ssoSessionMaxLifespan=31536000 \
+  -s clientSessionIdleTimeout=2592000 \
+  -s clientSessionMaxLifespan=31536000 \
+  -s accessTokenLifespan=900 \
+  -s accessTokenLifespanForImplicitFlow=900 \
+  -s offlineSessionIdleTimeout=2592000 \
+  && echo "keycloak setup: SSO idle=30d max=365d accessToken=15m" \
+  || echo "keycloak setup: session timeouts update skipped"
+
 # Disable passwordless WebAuthn registration if present on an existing realm.
 /opt/keycloak/bin/kcadm.sh update "authentication/required-actions/webauthn-register-passwordless" \
   -r "${KC_REALM}" \
