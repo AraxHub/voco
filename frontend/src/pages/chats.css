@@ -32,12 +32,32 @@
   padding: 0 4px;
 }
 
-.chats__listEmpty {
-  padding: 24px 12px;
+.chats__callCard {
+  align-self: center;
+  width: min(340px, 92%);
+  margin: 12px 0 20px;
+  padding: 20px 18px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--voco-accent) 35%, var(--voco-border));
+  background: color-mix(in srgb, var(--voco-accent) 10%, var(--voco-card));
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--voco-shadow);
+}
+
+.chats__callCardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--voco-text);
+}
+
+.chats__callCardText {
+  margin: 0;
+  font-size: 13px;
   color: var(--voco-text-muted);
-  font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .chats__item,

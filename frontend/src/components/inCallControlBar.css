@@ -73,6 +73,24 @@
   border-color: color-mix(in srgb, var(--voco-accent) 22%, transparent);
 }
 
+.roomHangupFab {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  z-index: 60;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--voco-danger-border);
+  background: var(--voco-danger-bg);
+  color: var(--voco-danger);
+  font-family: Outfit, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--voco-shadow);
+}
+
 @media (max-width: 700px) {
   .callBar {
     width: min(520px, calc(100vw - 24px));

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
+  acceptCall,
   acceptRequest,
   addGroupMember,
   authedBlobURL,
@@ -66,6 +67,13 @@ function formatListTime(iso?: string) {
   return d.toLocaleDateString([], { day: 'numeric', month: 'short' })
 }
 
+type ActiveCall = {
+  roomId: string
+  conversationId: string
+  callerName: string
+  expiresAt: string
+}
+
 export function ChatsPage() {
   const auth = useAuth()
   const nav = useNavigate()
@@ -87,6 +95,8 @@ export function ChatsPage() {
   const [incomingPending, setIncomingPending] = useState(false)
   const [typingLabel, setTypingLabel] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<string | null>(null)
+  const [activeCall, setActiveCall] = useState<ActiveCall | null>(null)
+  const [callBusy, setCallBusy] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const typingTimer = useRef<number | null>(null)
   const lastTypingSent = useRef(0)
@@ -218,6 +228,9 @@ export function ChatsPage() {
             UserID?: string
             displayName?: string
             nickname?: string
+            roomId?: string
+            callerName?: string
+            expiresAt?: string
           }
         }
         if (msg.event === 'message.created') {
@@ -240,6 +253,26 @@ export function ChatsPage() {
           }
           const title = msg.payload?.title || msg.payload?.Title
           if (title) setToast(String(title))
+        }
+        if (msg.event === 'call.started' || msg.event === 'call.incoming' || msg.event === 'call.outgoing') {
+          const roomId = String(msg.payload?.roomId || '')
+          const convId = String(msg.payload?.conversationId || msg.payload?.ConversationID || '')
+          if (roomId && convId) {
+            setActiveCall({
+              roomId,
+              conversationId: convId,
+              callerName: String(msg.payload?.callerName || 'Абонент'),
+              expiresAt: String(msg.payload?.expiresAt || ''),
+            })
+            if (convId !== conversationId) {
+              setToast('Идёт вызов')
+              void reloadList()
+            }
+          }
+        }
+        if (msg.event === 'call.cancelled' || msg.event === 'call.missed' || msg.event === 'call.declined') {
+          const roomId = String(msg.payload?.roomId || '')
+          setActiveCall((prev) => (prev && (!roomId || prev.roomId === roomId) ? null : prev))
         }
         if (msg.event === 'typing') {
           const cidEvt = (msg.payload?.conversationId || msg.payload?.ConversationID || '').toString()
@@ -268,6 +301,19 @@ export function ChatsPage() {
       if (typingTimer.current) window.clearTimeout(typingTimer.current)
     }
   }, [auth.token, conversationId, myId, members])
+
+  useEffect(() => {
+    if (!activeCall?.expiresAt) return
+    const ends = Date.parse(activeCall.expiresAt)
+    if (!Number.isFinite(ends)) return
+    const left = ends - Date.now()
+    if (left <= 0) {
+      setActiveCall(null)
+      return
+    }
+    const t = window.setTimeout(() => setActiveCall(null), left + 50)
+    return () => window.clearTimeout(t)
+  }, [activeCall])
 
   useEffect(() => {
     if (!toast) return
@@ -483,11 +529,23 @@ export function ChatsPage() {
                   </>
                 )}
                 <PrimaryButton
-                  onClick={() =>
-                    void callFromChat(cid(active))
-                      .then((r) => nav(`/room/${r.roomId}?awaiting=1&join=1`))
+                  disabled={callBusy || Boolean(activeCall && activeCall.conversationId === conversationId)}
+                  onClick={() => {
+                    if (!conversationId) return
+                    setCallBusy(true)
+                    void callFromChat(conversationId)
+                      .then((r) => {
+                        setActiveCall({
+                          roomId: r.roomId,
+                          conversationId,
+                          callerName: auth.displayName || auth.username || 'Вы',
+                          expiresAt: r.expiresAt,
+                        })
+                        setToast('Вызов начат — можно войти в комнату')
+                      })
                       .catch((e) => setError(String(e)))
-                  }
+                      .finally(() => setCallBusy(false))
+                  }}
                 >
                   Позвонить
                 </PrimaryButton>
@@ -538,6 +596,25 @@ export function ChatsPage() {
               </div>
             )}
             <div className="chats__messages">
+              {activeCall && activeCall.conversationId === conversationId && (
+                <div className="chats__callCard" role="status">
+                  <div className="chats__callCardTitle">Идёт вызов</div>
+                  <p className="chats__callCardText">
+                    {activeCall.callerName ? `${activeCall.callerName} · ` : ''}
+                    комната готова для обоих участников
+                  </p>
+                  <PrimaryButton
+                    type="button"
+                    onClick={() => {
+                      const roomId = activeCall.roomId
+                      void acceptCall(roomId).catch(() => undefined)
+                      nav(`/room/${roomId}?join=1`)
+                    }}
+                  >
+                    Войти в комнату
+                  </PrimaryButton>
+                </div>
+              )}
               {[...messages].reverse().map((m) => (
                 <div key={mid(m)} className={`chats__msg${isOwnMessage(m) ? ' is-own' : ''}`}>
                   {!isOwnMessage(m) && <div className="chats__msgSender">{senderLabel(m)}</div>}

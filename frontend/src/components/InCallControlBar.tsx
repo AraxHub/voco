@@ -50,13 +50,18 @@ export function InCallControlBar({ onCopyLink, copied, onLeave }: Props) {
         type="button"
         className="callBar__btn callBar__btn--leave"
         aria-label="Завершить звонок"
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          // Leave app state first — disconnect is best-effort.
           onLeave()
-          try {
-            void room.disconnect()
-          } catch {
-            /* already leaving */
-          }
+          window.setTimeout(() => {
+            try {
+              void room.disconnect()
+            } catch {
+              /* ignore */
+            }
+          }, 0)
         }}
       >
         Выйти

@@ -660,8 +660,9 @@ func (uc *Usecase) CallFromChat(ctx context.Context, me domain.UserID, cid domai
 		"callerName":     callerName,
 		"expiresAt":      expires,
 	}
+	// Both sides get an in-chat call card; callee also gets the fullscreen ring.
+	uc.publishUsers([]domain.UserID{me, peer}, "call.started", payload)
 	uc.publishUsers([]domain.UserID{peer}, "call.incoming", payload)
-	uc.publishUsers([]domain.UserID{me}, "call.outgoing", payload)
 
 	go uc.watchCallTimeout(room.ID.UUID())
 

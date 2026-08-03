@@ -141,12 +141,12 @@ export function RoomPage() {
       void cancelCall(id).catch(() => undefined)
     }
     setJoinState({ phase: 'ended', message })
-    nav('/chats')
+    // replace: back button must not return into the live room URL
+    nav('/chats', { replace: true })
   }
 
   function onLeaveCall() {
-    // Red hangup: always leave. Cancel remote ring only while still waiting.
-    endCallLocally('Звонок завершён', ringingRef.current || awaitBanner)
+    endCallLocally('Звонок завершён', ringingRef.current || awaitBanner || awaitingPeer)
   }
 
   async function onJoin() {
@@ -303,18 +303,13 @@ export function RoomPage() {
             stopPreview()
             setCameraOn(false)
             setMicOn(false)
-            // User already handled leave via red button / back.
-            if (intentionalLeaveRef.current) {
-              return
-            }
-            // Transient LiveKit drop while still ringing — stay on prejoin,
-            // but do NOT clear autoJoinedRef (that re-joins and traps the user).
-            if (ringingRef.current) {
-              setJoinState({ phase: 'prejoin' })
-              return
-            }
+            if (intentionalLeaveRef.current) return
+            // Unexpected drop: leave to chats, never bounce back into auto-join.
+            intentionalLeaveRef.current = true
+            ringingRef.current = false
+            callActiveRef.current = false
             setJoinState({ phase: 'ended', message: 'Звонок завершён' })
-            nav('/chats')
+            nav('/chats', { replace: true })
           }}
           data-lk-theme="default"
           style={{ height: '100vh' }}
@@ -327,6 +322,15 @@ export function RoomPage() {
             onLeave={onLeaveCall}
           />
           <RoomAudioRenderer />
+          {/* Hard hangup outside LiveKit focus traps */}
+          <button
+            type="button"
+            className="roomHangupFab"
+            onClick={onLeaveCall}
+            aria-label="Завершить звонок"
+          >
+            Выйти
+          </button>
         </LiveKitRoom>
       </div>
     )
