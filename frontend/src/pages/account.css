@@ -1,9 +1,14 @@
 .accountPage {
-  min-height: 100svh;
+  height: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  gap: 20px;
+  padding: 20px 24px;
+  gap: 16px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 
 .accountPage__top {
@@ -18,23 +23,23 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 24px 0 48px;
+  padding: 16px 0 32px;
 }
 
 .accountPage__stack {
-  width: min(480px, 100%);
+  width: min(440px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .accountPage__card {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  padding: 22px 20px;
-  background: rgba(10, 10, 22, 0.72);
+  border: 1px solid var(--voco-border);
+  border-radius: 14px;
+  padding: 20px 18px;
+  background: var(--voco-card);
   backdrop-filter: none;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--voco-shadow);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -42,14 +47,15 @@
 
 .accountPage__title {
   margin: 0;
-  font-size: 22px;
-  color: rgba(255, 255, 255, 0.95);
+  font-size: 20px;
+  color: var(--voco-text);
+  font-weight: 600;
 }
 
 .accountPage__hint {
   margin: 0;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--voco-text-muted);
   line-height: 1.45;
 }
 
@@ -61,15 +67,15 @@
 
 .accountPage__label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--voco-text-muted);
 }
 
 .accountPage__readonly {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--voco-border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  background: var(--voco-input-bg);
+  color: var(--voco-text-dim);
   font-size: 15px;
 }
 
@@ -88,14 +94,14 @@
 }
 
 .accountPage__ok {
-  border: 1px solid rgba(82, 196, 127, 0.45);
-  background: rgba(82, 196, 127, 0.12);
-  color: rgba(220, 255, 230, 0.95);
+  border: 1px solid var(--voco-success-border);
+  background: var(--voco-success-bg);
+  color: var(--voco-success);
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 14px;
 }
 
 html[data-fx='fancy'] .accountPage__card {
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
 }

@@ -21,6 +21,7 @@ import {
   wsURL,
 } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
+import { keycloak } from '../lib/keycloak'
 import { PrimaryButton, GhostButton } from '../ui/Button'
 import { GlassInput } from '../ui/Input'
 import './chats.css'
@@ -39,6 +40,9 @@ function typeOf(c: Conversation) {
 }
 function senderLabel(m: Message) {
   return m.senderName || 'Участник'
+}
+function senderId(m: Message) {
+  return (m.senderId || m.SenderID || '').toString()
 }
 
 export function ChatsPage() {
@@ -64,6 +68,17 @@ export function ChatsPage() {
     [list, conversationId],
   )
   const activeIsGroup = active ? typeOf(active) === 'group' : false
+  const myId = (keycloak?.tokenParsed?.sub ?? '').toString()
+  const myNames = useMemo(() => {
+    const names = [auth.username, auth.displayName].filter(Boolean).map((s) => s!.toLowerCase())
+    return new Set(names)
+  }, [auth.username, auth.displayName])
+  function isOwnMessage(m: Message) {
+    const sid = senderId(m)
+    if (myId && sid && sid === myId) return true
+    const name = (m.senderName || '').toLowerCase()
+    return Boolean(name && myNames.has(name))
+  }
 
   async function reloadList() {
     const data = await listConversations()
@@ -361,8 +376,8 @@ export function ChatsPage() {
             )}
             <div className="chats__messages">
               {[...messages].reverse().map((m) => (
-                <div key={mid(m)} className="chats__msg">
-                  <div className="chats__msgSender">{senderLabel(m)}</div>
+                <div key={mid(m)} className={`chats__msg${isOwnMessage(m) ? ' is-own' : ''}`}>
+                  {!isOwnMessage(m) && <div className="chats__msgSender">{senderLabel(m)}</div>}
                   <div className="chats__msgBody">{m.DeletedForAllAt ? 'Сообщение удалено' : m.Body}</div>
                   <div className="chats__msgMeta">{new Date(m.CreatedAt).toLocaleString()}</div>
                 </div>

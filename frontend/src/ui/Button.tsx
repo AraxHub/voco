@@ -25,19 +25,19 @@ export function PrimaryButton({ children, loading, fullWidth, disabled, classNam
       onPointerDown={handlePress}
       className={`gradient-breathe relative overflow-hidden select-none outline-none ${fullWidth ? 'w-full' : ''} ${className}`}
       style={{
-        padding: '14px 36px',
-        borderRadius: 9999,
+        padding: '10px 20px',
+        borderRadius: 10,
         background: 'var(--voco-primary-grad)',
-        backgroundSize: '200% 200%',
+        backgroundSize: '100% 100%',
         color: 'var(--voco-btn-fg)',
         fontFamily: 'Outfit, sans-serif',
         fontWeight: 600,
         fontSize: 14,
-        letterSpacing: '0.07em',
+        letterSpacing: '0.01em',
         boxShadow: pressed
-          ? '0 2px 12px color-mix(in srgb, var(--voco-accent) 28%, transparent), inset 0 2px 6px rgba(0,0,0,0.12)'
+          ? '0 1px 4px color-mix(in srgb, var(--voco-accent) 20%, transparent), inset 0 1px 3px rgba(0,0,0,0.1)'
           : 'var(--voco-primary-glow)',
-        transform: pressed ? 'scale(0.975) translateY(1px)' : 'scale(1)',
+        transform: pressed ? 'scale(0.98)' : 'scale(1)',
         transition: 'transform 0.14s cubic-bezier(0.22,1,0.36,1), box-shadow 0.14s ease',
         opacity: disabled || loading ? 0.5 : 1,
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
@@ -49,10 +49,10 @@ export function PrimaryButton({ children, loading, fullWidth, disabled, classNam
         className="sheen-loop absolute inset-0 pointer-events-none"
         style={{
           background: 'var(--voco-sheen)',
-          borderRadius: 9999,
+          borderRadius: 10,
         }}
       />
-      <CircuitRim active={rimActive} color="rgba(255,255,255,0.95)" />
+      <CircuitRim active={rimActive} color="rgba(255,255,255,0.7)" />
       {loading ? (
         <span className="flex items-center justify-center gap-2">
           <Spinner /> {children}
@@ -75,18 +75,18 @@ export function SecondaryButton({ children, loading, fullWidth, disabled, classN
       onPointerLeave={() => setHovered(false)}
       className={`relative overflow-hidden select-none outline-none ${fullWidth ? 'w-full' : ''} ${className}`}
       style={{
-        padding: '13px 36px',
-        borderRadius: 9999,
+        padding: '10px 20px',
+        borderRadius: 10,
         background: hovered
           ? 'color-mix(in srgb, var(--voco-accent) 10%, transparent)'
           : 'var(--voco-input-bg)',
-        border: `1px solid ${hovered ? 'color-mix(in srgb, var(--voco-accent) 50%, transparent)' : 'var(--voco-border)'}`,
+        border: `1px solid ${hovered ? 'color-mix(in srgb, var(--voco-accent) 40%, transparent)' : 'var(--voco-border)'}`,
         color: hovered ? 'var(--voco-accent)' : 'var(--voco-text-muted)',
         fontFamily: 'Outfit, sans-serif',
         fontWeight: 500,
         fontSize: 14,
-        letterSpacing: '0.06em',
-        transition: 'all 0.22s ease',
+        letterSpacing: '0.01em',
+        transition: 'all 0.18s ease',
         opacity: disabled || loading ? 0.5 : 1,
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         ...props.style,
@@ -114,18 +114,17 @@ export function GhostButton({ children, loading, fullWidth, disabled, className 
       onPointerLeave={() => setHovered(false)}
       className={`select-none outline-none ${fullWidth ? 'w-full' : ''} ${className}`}
       style={{
-        padding: '13px 36px',
-        borderRadius: 9999,
+        padding: '10px 16px',
+        borderRadius: 10,
         background: 'transparent',
         border: 'none',
-        color: hovered ? 'var(--voco-text-muted)' : 'var(--voco-text-faint)',
+        color: hovered ? 'var(--voco-accent)' : 'var(--voco-text-muted)',
         fontFamily: 'Outfit, sans-serif',
-        fontWeight: 400,
+        fontWeight: 500,
         fontSize: 14,
-        letterSpacing: '0.04em',
+        letterSpacing: '0.01em',
         transition: 'color 0.18s ease',
-        textDecoration: hovered ? 'underline' : 'none',
-        textUnderlineOffset: 3,
+        textDecoration: 'none',
         opacity: disabled || loading ? 0.5 : 1,
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         ...props.style,
@@ -168,24 +167,24 @@ export function DangerButton({ children, loading, fullWidth, disabled, className
       onPointerDown={handlePress}
       className={`relative overflow-hidden select-none outline-none ${fullWidth ? 'w-full' : ''} ${className}`}
       style={{
-        padding: '13px 36px',
-        borderRadius: 9999,
+        padding: '10px 20px',
+        borderRadius: 10,
         background: 'var(--voco-danger-bg)',
         border: '1px solid var(--voco-danger-border)',
         color: 'var(--voco-danger)',
         fontFamily: 'Outfit, sans-serif',
         fontWeight: 500,
         fontSize: 14,
-        letterSpacing: '0.05em',
-        transform: pressed ? 'scale(0.976)' : 'scale(1)',
+        letterSpacing: '0.01em',
+        transform: pressed ? 'scale(0.98)' : 'scale(1)',
         transition: 'all 0.14s ease',
-        boxShadow: '0 0 18px color-mix(in srgb, var(--voco-danger) 20%, transparent)',
+        boxShadow: 'none',
         opacity: disabled || loading ? 0.5 : 1,
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         ...props.style,
       }}
     >
-      <CircuitRim active={rimActive} color="rgba(220,100,100,0.9)" />
+      <CircuitRim active={rimActive} color="rgba(220,100,100,0.7)" />
       {loading ? (
         <span className="flex items-center justify-center gap-2">
           <Spinner color="var(--voco-danger)" /> {children}

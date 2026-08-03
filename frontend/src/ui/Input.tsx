@@ -37,7 +37,7 @@ export function GlassInput({ label, error, className = '', ...props }: InputProp
           }}
           style={{
             width: '100%',
-            padding: '13px 16px',
+            padding: '11px 14px',
             borderRadius: 10,
             background: focused ? 'var(--voco-input-bg-focus)' : 'var(--voco-input-bg)',
             border: `1px solid ${
@@ -48,31 +48,11 @@ export function GlassInput({ label, error, className = '', ...props }: InputProp
             fontSize: 15,
             fontWeight: 400,
             outline: 'none',
-            transition: 'all 0.2s ease',
-            boxShadow: focused
-              ? '0 0 0 3px color-mix(in srgb, var(--voco-accent) 12%, transparent), inset 0 1px 4px rgba(0,0,0,0.08)'
-              : 'inset 0 1px 4px rgba(0,0,0,0.06)',
+            transition: 'border-color 0.18s ease, background 0.18s ease',
+            boxShadow: 'none',
             ...props.style,
           }}
         />
-        {focused && (
-          <svg
-            className="absolute pointer-events-none"
-            style={{ top: -1, left: -1, width: 28, height: 28 }}
-            overflow="visible"
-          >
-            <path
-              d="M 0,14 L 0,0 L 14,0"
-              fill="none"
-              stroke="var(--voco-circuit)"
-              strokeWidth="1.5"
-              strokeDasharray="8 60"
-              strokeDashoffset="68"
-              style={{ animation: 'circuit-run 0.55s ease forwards' }}
-              filter="drop-shadow(0 0 4px color-mix(in srgb, var(--voco-accent) 55%, transparent))"
-            />
-          </svg>
-        )}
       </div>
       {error && (
         <p

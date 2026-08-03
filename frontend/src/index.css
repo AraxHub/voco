@@ -2,128 +2,136 @@
 
 @theme {
   --font-sans: 'Outfit', system-ui, sans-serif;
-  --font-display: 'Syncopate', sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
 }
 
-/* ─── Dark (default) ─── */
+/* ─── Dark: soft Telegram-like ─── */
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --voco-bg: #080c10;
-  --voco-bg-soft: #060a0e;
-  --voco-text: #e8eef5;
-  --voco-text-muted: #6b7a8d;
-  --voco-text-dim: #4a6070;
-  --voco-text-faint: #2e4050;
-  --voco-accent: #1de9b6;
-  --voco-accent-2: #00d4ff;
-  --voco-accent-3: #d4a853;
-  --voco-btn-fg: #06121c;
-  --voco-primary-grad: linear-gradient(130deg, #1de9b6 0%, #00c8ef 45%, #c8a248 100%);
-  --voco-card: rgba(12, 20, 30, 0.72);
-  --voco-card-strong: rgba(10, 18, 28, 0.82);
-  --voco-border: rgba(255, 255, 255, 0.09);
-  --voco-border-soft: rgba(255, 255, 255, 0.07);
-  --voco-input-bg: rgba(255, 255, 255, 0.04);
-  --voco-input-bg-focus: rgba(29, 233, 182, 0.05);
-  --voco-input-border: rgba(255, 255, 255, 0.1);
-  --voco-input-border-focus: rgba(29, 233, 182, 0.5);
-  --voco-danger: #f4a0a0;
-  --voco-danger-bg: rgba(160, 44, 44, 0.38);
-  --voco-danger-border: rgba(220, 80, 80, 0.35);
+  --voco-bg: #0e1621;
+  --voco-bg-soft: #17212b;
+  --voco-text: #f5f5f5;
+  --voco-text-muted: #8b9aab;
+  --voco-text-dim: #6d7f91;
+  --voco-text-faint: #546576;
+  --voco-accent: #2aabee;
+  --voco-accent-2: #5eb8f0;
+  --voco-accent-3: #1e88c7;
+  --voco-btn-fg: #ffffff;
+  --voco-primary-grad: linear-gradient(180deg, #3bb4f0 0%, #2aabee 100%);
+  --voco-card: #17212b;
+  --voco-card-strong: #1c2733;
+  --voco-border: rgba(255, 255, 255, 0.06);
+  --voco-border-soft: rgba(255, 255, 255, 0.04);
+  --voco-input-bg: #242f3d;
+  --voco-input-bg-focus: #2b3848;
+  --voco-input-border: rgba(255, 255, 255, 0.08);
+  --voco-input-border-focus: rgba(42, 171, 238, 0.55);
+  --voco-danger: #e57373;
+  --voco-danger-bg: rgba(229, 115, 115, 0.12);
+  --voco-danger-border: rgba(229, 115, 115, 0.28);
   --voco-success: #6ddba8;
   --voco-success-bg: rgba(45, 200, 130, 0.1);
-  --voco-success-border: rgba(45, 200, 130, 0.3);
-  --voco-error-bg: rgba(200, 60, 60, 0.12);
-  --voco-error-border: rgba(200, 60, 60, 0.35);
-  --voco-chip-bg: rgba(255, 255, 255, 0.04);
-  --voco-shadow: 0 4px 48px rgba(0, 0, 0, 0.55);
-  --voco-primary-glow: 0 0 24px rgba(29, 233, 182, 0.22), 0 6px 28px rgba(0, 0, 0, 0.45);
-  --voco-rail-a: rgba(29, 233, 182, 0.35);
-  --voco-rail-a-dim: rgba(29, 233, 182, 0);
-  --voco-rail-b: rgba(0, 212, 255, 0.3);
-  --voco-rail-b-dim: rgba(0, 212, 255, 0);
-  --voco-rail-c: rgba(212, 168, 83, 0.28);
-  --voco-rail-c-dim: rgba(212, 168, 83, 0);
-  --voco-surge-a: rgba(29, 233, 182, 0.95);
-  --voco-surge-b: rgba(0, 212, 255, 0.9);
-  --voco-surge-c: rgba(212, 168, 83, 0.85);
-  --voco-circuit: rgba(29, 233, 182, 0.9);
-  --voco-scroll: rgba(29, 233, 182, 0.18);
-  --voco-hero-grad: linear-gradient(130deg, #c8e8f0 0%, #1de9b6 35%, #00d4ff 60%, #d4a853 100%);
-  --voco-brand-grad: linear-gradient(130deg, #e8f8f5 0%, #1de9b6 60%);
-  --voco-vignette: radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(8, 12, 16, 0.55) 100%);
-  --voco-blob-1: radial-gradient(ellipse at center, rgba(29, 233, 182, 0.14) 0%, transparent 68%);
-  --voco-blob-2: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
-  --voco-blob-3: radial-gradient(ellipse at center, rgba(212, 168, 83, 0.07) 0%, transparent 72%);
-  --voco-blob-4: radial-gradient(ellipse at center, rgba(0, 176, 210, 0.08) 0%, transparent 70%);
-  --voco-bloom-a: radial-gradient(ellipse at center, rgba(29, 233, 182, 0.2) 0%, transparent 70%);
-  --voco-bloom-b: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.16) 0%, transparent 70%);
-  --voco-bloom-c: radial-gradient(ellipse at center, rgba(212, 168, 83, 0.12) 0%, transparent 72%);
-  --voco-toggle-on: rgba(29, 233, 182, 0.85);
-  --voco-toggle-on-core: rgba(29, 233, 182, 0.22);
+  --voco-success-border: rgba(45, 200, 130, 0.28);
+  --voco-error-bg: rgba(229, 115, 115, 0.1);
+  --voco-error-border: rgba(229, 115, 115, 0.3);
+  --voco-chip-bg: #242f3d;
+  --voco-shadow: 0 2px 16px rgba(0, 0, 0, 0.28);
+  --voco-primary-glow: 0 2px 10px rgba(42, 171, 238, 0.28);
+  --voco-bubble-in: #182533;
+  --voco-bubble-out: #2b5278;
+  --voco-chat-bg: #0e1621;
+  --voco-sidebar-bg: #17212b;
+  --voco-rail-a: rgba(42, 171, 238, 0.12);
+  --voco-rail-a-dim: rgba(42, 171, 238, 0);
+  --voco-rail-b: rgba(94, 184, 240, 0.1);
+  --voco-rail-b-dim: rgba(94, 184, 240, 0);
+  --voco-rail-c: rgba(30, 136, 199, 0.1);
+  --voco-rail-c-dim: rgba(30, 136, 199, 0);
+  --voco-surge-a: rgba(42, 171, 238, 0.35);
+  --voco-surge-b: rgba(94, 184, 240, 0.3);
+  --voco-surge-c: rgba(30, 136, 199, 0.28);
+  --voco-circuit: rgba(42, 171, 238, 0.55);
+  --voco-scroll: rgba(139, 154, 171, 0.35);
+  --voco-hero-grad: linear-gradient(130deg, #f5f5f5 0%, #5eb8f0 45%, #2aabee 100%);
+  --voco-brand-grad: linear-gradient(130deg, #f5f5f5 0%, #2aabee 70%);
+  --voco-vignette: radial-gradient(ellipse at 50% 40%, transparent 45%, rgba(14, 22, 33, 0.35) 100%);
+  --voco-blob-1: radial-gradient(ellipse at center, rgba(42, 171, 238, 0.08) 0%, transparent 70%);
+  --voco-blob-2: radial-gradient(ellipse at center, rgba(94, 184, 240, 0.06) 0%, transparent 72%);
+  --voco-blob-3: radial-gradient(ellipse at center, rgba(30, 136, 199, 0.05) 0%, transparent 72%);
+  --voco-blob-4: radial-gradient(ellipse at center, rgba(42, 171, 238, 0.04) 0%, transparent 70%);
+  --voco-bloom-a: radial-gradient(ellipse at center, rgba(42, 171, 238, 0.1) 0%, transparent 70%);
+  --voco-bloom-b: radial-gradient(ellipse at center, rgba(94, 184, 240, 0.08) 0%, transparent 70%);
+  --voco-bloom-c: radial-gradient(ellipse at center, rgba(30, 136, 199, 0.07) 0%, transparent 72%);
+  --voco-toggle-on: #2aabee;
+  --voco-toggle-on-core: rgba(42, 171, 238, 0.2);
   --voco-toggle-off: rgba(80, 100, 120, 0.18);
-  --voco-sheen: linear-gradient(108deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  --voco-sheen: linear-gradient(108deg, transparent 30%, rgba(255, 255, 255, 0.18) 50%, transparent 70%);
 }
 
-/* ─── Light: high-contrast white + orange electricity ─── */
+/* ─── Light: soft Telegram-like ─── */
 [data-theme='light'] {
   color-scheme: light;
-  --voco-bg: #f5f6f8;
-  --voco-bg-soft: #ffffff;
-  --voco-text: #0d1117;
-  --voco-text-muted: #3d4654;
-  --voco-text-dim: #5a6472;
-  --voco-text-faint: #7a8494;
-  --voco-accent: #e85a00;
-  --voco-accent-2: #ff7a1a;
-  --voco-accent-3: #fff0e6;
-  --voco-btn-fg: #1a0a00;
-  --voco-primary-grad: linear-gradient(130deg, #ffffff 0%, #ff8a2b 38%, #e85a00 100%);
-  --voco-card: rgba(255, 255, 255, 0.92);
+  --voco-bg: #ffffff;
+  --voco-bg-soft: #f4f4f5;
+  --voco-text: #1a1a1a;
+  --voco-text-muted: #707579;
+  --voco-text-dim: #8a8e93;
+  --voco-text-faint: #a0a4a8;
+  --voco-accent: #3390ec;
+  --voco-accent-2: #4a9eed;
+  --voco-accent-3: #2481d6;
+  --voco-btn-fg: #ffffff;
+  --voco-primary-grad: linear-gradient(180deg, #4a9eed 0%, #3390ec 100%);
+  --voco-card: #ffffff;
   --voco-card-strong: #ffffff;
-  --voco-border: rgba(13, 17, 23, 0.16);
-  --voco-border-soft: rgba(13, 17, 23, 0.1);
-  --voco-input-bg: #ffffff;
-  --voco-input-bg-focus: rgba(232, 90, 0, 0.06);
-  --voco-input-border: rgba(13, 17, 23, 0.18);
-  --voco-input-border-focus: rgba(232, 90, 0, 0.7);
-  --voco-danger: #c62828;
-  --voco-danger-bg: rgba(198, 40, 40, 0.1);
-  --voco-danger-border: rgba(198, 40, 40, 0.45);
-  --voco-success: #0d7a4a;
-  --voco-success-bg: rgba(13, 122, 74, 0.1);
-  --voco-success-border: rgba(13, 122, 74, 0.4);
-  --voco-error-bg: rgba(198, 40, 40, 0.08);
-  --voco-error-border: rgba(198, 40, 40, 0.4);
-  --voco-chip-bg: #ffffff;
-  --voco-shadow: 0 10px 40px rgba(13, 17, 23, 0.12), 0 1px 0 rgba(13, 17, 23, 0.04);
-  --voco-primary-glow: 0 0 32px rgba(232, 90, 0, 0.35), 0 8px 28px rgba(13, 17, 23, 0.12);
-  --voco-rail-a: rgba(232, 90, 0, 0.55);
-  --voco-rail-a-dim: rgba(232, 90, 0, 0);
-  --voco-rail-b: rgba(255, 255, 255, 1);
-  --voco-rail-b-dim: rgba(255, 255, 255, 0);
-  --voco-rail-c: rgba(255, 140, 50, 0.6);
-  --voco-rail-c-dim: rgba(255, 140, 50, 0);
-  --voco-surge-a: rgba(232, 90, 0, 1);
-  --voco-surge-b: rgba(255, 255, 255, 1);
-  --voco-surge-c: rgba(255, 120, 30, 0.95);
-  --voco-circuit: rgba(232, 90, 0, 0.95);
-  --voco-scroll: rgba(232, 90, 0, 0.4);
-  --voco-hero-grad: linear-gradient(130deg, #1a1f28 0%, #e85a00 42%, #ff7a1a 72%, #ffb070 100%);
-  --voco-brand-grad: linear-gradient(130deg, #0d1117 0%, #e85a00 75%);
-  --voco-vignette: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(200, 205, 215, 0.45) 100%);
-  --voco-blob-1: radial-gradient(ellipse at center, rgba(255, 255, 255, 1) 0%, transparent 68%);
-  --voco-blob-2: radial-gradient(ellipse at center, rgba(232, 90, 0, 0.22) 0%, transparent 70%);
-  --voco-blob-3: radial-gradient(ellipse at center, rgba(255, 160, 80, 0.28) 0%, transparent 72%);
-  --voco-blob-4: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.9) 0%, transparent 70%);
-  --voco-bloom-a: radial-gradient(ellipse at center, rgba(232, 90, 0, 0.28) 0%, transparent 70%);
-  --voco-bloom-b: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.95) 0%, transparent 70%);
-  --voco-bloom-c: radial-gradient(ellipse at center, rgba(255, 140, 50, 0.26) 0%, transparent 72%);
-  --voco-toggle-on: rgba(232, 90, 0, 1);
-  --voco-toggle-on-core: rgba(232, 90, 0, 0.22);
+  --voco-border: rgba(0, 0, 0, 0.08);
+  --voco-border-soft: rgba(0, 0, 0, 0.05);
+  --voco-input-bg: #f4f4f5;
+  --voco-input-bg-focus: #ffffff;
+  --voco-input-border: rgba(0, 0, 0, 0.1);
+  --voco-input-border-focus: rgba(51, 144, 236, 0.55);
+  --voco-danger: #d32f2f;
+  --voco-danger-bg: rgba(211, 47, 47, 0.08);
+  --voco-danger-border: rgba(211, 47, 47, 0.28);
+  --voco-success: #2e7d32;
+  --voco-success-bg: rgba(46, 125, 50, 0.08);
+  --voco-success-border: rgba(46, 125, 50, 0.28);
+  --voco-error-bg: rgba(211, 47, 47, 0.06);
+  --voco-error-border: rgba(211, 47, 47, 0.28);
+  --voco-chip-bg: #f4f4f5;
+  --voco-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
+  --voco-primary-glow: 0 2px 8px rgba(51, 144, 236, 0.22);
+  --voco-bubble-in: #ffffff;
+  --voco-bubble-out: #effdde;
+  --voco-chat-bg: #91a3b5;
+  --voco-sidebar-bg: #ffffff;
+  --voco-rail-a: rgba(51, 144, 236, 0.12);
+  --voco-rail-a-dim: rgba(51, 144, 236, 0);
+  --voco-rail-b: rgba(74, 158, 237, 0.1);
+  --voco-rail-b-dim: rgba(74, 158, 237, 0);
+  --voco-rail-c: rgba(36, 129, 214, 0.1);
+  --voco-rail-c-dim: rgba(36, 129, 214, 0);
+  --voco-surge-a: rgba(51, 144, 236, 0.28);
+  --voco-surge-b: rgba(74, 158, 237, 0.22);
+  --voco-surge-c: rgba(36, 129, 214, 0.2);
+  --voco-circuit: rgba(51, 144, 236, 0.5);
+  --voco-scroll: rgba(112, 117, 121, 0.35);
+  --voco-hero-grad: linear-gradient(130deg, #1a1a1a 0%, #3390ec 55%, #4a9eed 100%);
+  --voco-brand-grad: linear-gradient(130deg, #1a1a1a 0%, #3390ec 75%);
+  --voco-vignette: radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(200, 210, 220, 0.25) 100%);
+  --voco-blob-1: radial-gradient(ellipse at center, rgba(51, 144, 236, 0.08) 0%, transparent 70%);
+  --voco-blob-2: radial-gradient(ellipse at center, rgba(145, 163, 181, 0.18) 0%, transparent 72%);
+  --voco-blob-3: radial-gradient(ellipse at center, rgba(74, 158, 237, 0.08) 0%, transparent 72%);
+  --voco-blob-4: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+  --voco-bloom-a: radial-gradient(ellipse at center, rgba(51, 144, 236, 0.1) 0%, transparent 70%);
+  --voco-bloom-b: radial-gradient(ellipse at center, rgba(145, 163, 181, 0.15) 0%, transparent 70%);
+  --voco-bloom-c: radial-gradient(ellipse at center, rgba(74, 158, 237, 0.08) 0%, transparent 72%);
+  --voco-toggle-on: #3390ec;
+  --voco-toggle-on-core: rgba(51, 144, 236, 0.18);
   --voco-toggle-off: rgba(80, 90, 105, 0.12);
-  --voco-sheen: linear-gradient(108deg, transparent 28%, rgba(255, 255, 255, 0.85) 50%, transparent 72%);
+  --voco-sheen: linear-gradient(108deg, transparent 28%, rgba(255, 255, 255, 0.45) 50%, transparent 72%);
 }
 
 @keyframes aurora-1 {
@@ -371,9 +379,9 @@ html[data-fx='fancy'] .mineral-card {
 }
 
 .themeToggle {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   border: 1px solid var(--voco-border);
   background: var(--voco-chip-bg);
   color: var(--voco-text-muted);
@@ -381,7 +389,7 @@ html[data-fx='fancy'] .mineral-card {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: var(--voco-shadow);
+  box-shadow: none;
   transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.14s ease;
 }
 
@@ -408,20 +416,10 @@ body:has(.callShell) .themeToggle--fixed {
   bottom: 110px;
 }
 
-[data-theme='light'] .voco-bg__blob--2,
-[data-theme='light'] .surge-bloom--a,
-[data-theme='light'] .surge-bloom--c {
-  opacity: 1;
-}
-
-[data-theme='light'] .bg-surge {
-  filter: drop-shadow(0 0 3px rgba(232, 90, 0, 0.55));
-}
-
 [data-theme='light'] .callShell__masthead .roomDurationClock {
-  border-color: rgba(13, 17, 23, 0.14);
-  background: rgba(255, 255, 255, 0.9);
-  color: #0d1117;
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1a1a;
 }
 
 .homeSettings:hover {
@@ -436,19 +434,19 @@ a.voco-nav-btn {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 16px;
-  min-height: 40px;
-  border-radius: 12px;
+  padding: 8px 14px;
+  min-height: 36px;
+  border-radius: 10px;
   border: 1px solid var(--voco-border);
   background: var(--voco-chip-bg);
   color: var(--voco-text);
   font-family: 'Outfit', sans-serif;
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--voco-text) 4%, transparent);
+  box-shadow: none;
   transition:
     color 0.18s ease,
     border-color 0.18s ease,
@@ -475,10 +473,14 @@ a.voco-nav-btn:active {
   padding: 0;
 }
 
+/* Lock viewport: only inner panels scroll — not the whole app (trackpad rubber-band). */
 html,
 body,
 #root {
-  min-height: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 html,
@@ -489,6 +491,21 @@ body {
   font-family: 'Outfit', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.35s ease, color 0.35s ease;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  touch-action: manipulation;
+}
+
+#root {
+  position: relative;
+  isolation: isolate;
+}
+
+.voco-scroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 * {
@@ -504,9 +521,9 @@ body {
 .authBoot {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
+  height: 100%;
   display: grid;
   place-items: center;
   color: var(--voco-text-muted);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
 }

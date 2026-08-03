@@ -22,8 +22,8 @@ export function MineralCard({
       style={{
         background: 'var(--voco-card)',
         border: '1px solid var(--voco-border)',
-        borderRadius: 20,
-        boxShadow: 'var(--voco-shadow), inset 0 1px 0 rgba(255,255,255,0.08)',
+        borderRadius: 14,
+        boxShadow: 'var(--voco-shadow)',
         ...style,
       }}
     >
