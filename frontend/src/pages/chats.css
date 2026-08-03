@@ -377,8 +377,47 @@
 
 .chats__actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.chats__requestBanner {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--voco-border);
+  background: color-mix(in srgb, var(--voco-accent) 12%, var(--voco-sidebar-bg));
+}
+
+.chats__requestText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--voco-text);
+}
+
+.chats__requestText strong {
+  font-weight: 700;
+}
+
+.chats__requestActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.chats__requestBtn {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.chats__requestBtn--accept {
+  font-weight: 700;
 }
 
 .chats__messages {
@@ -543,14 +582,40 @@
     gap: 8px;
   }
 
+  .chats__headTitle {
+    flex: 1;
+    min-width: 0;
+  }
+
   .chats__actions {
     flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 
   .chats__actions .voco-btn,
   .chats__actions button {
     font-size: 13px;
     padding-inline: 10px;
+    white-space: nowrap;
+  }
+
+  .chats__requestBanner {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .chats__requestText {
+    font-size: 13px;
+  }
+
+  .chats__requestActions {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .chats__requestBtn {
+    min-height: 48px;
+    font-size: 15px;
   }
 
   .chats__composer {

@@ -26,7 +26,7 @@ import {
   wsURL,
 } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
-import { PrimaryButton, GhostButton } from '../ui/Button'
+import { PrimaryButton, GhostButton, DangerButton } from '../ui/Button'
 import { GlassInput } from '../ui/Input'
 import './chats.css'
 
@@ -500,34 +500,6 @@ export function ChatsPage() {
                     {showGroupEdit ? 'Скрыть' : 'Участники'}
                   </GhostButton>
                 )}
-                {incomingPending && messages.length > 0 && (
-                  <>
-                    <GhostButton
-                      onClick={() =>
-                        void acceptRequest(cid(active))
-                          .then(() => {
-                            setIncomingPending(false)
-                            setToast('Запрос принят')
-                          })
-                          .catch((e) => setError(String(e)))
-                      }
-                    >
-                      Принять
-                    </GhostButton>
-                    <GhostButton
-                      onClick={() =>
-                        void blockRequest(cid(active))
-                          .then(() => {
-                            setIncomingPending(false)
-                            setToast('Заблокировано')
-                          })
-                          .catch((e) => setError(String(e)))
-                      }
-                    >
-                      Заблокировать
-                    </GhostButton>
-                  </>
-                )}
                 <PrimaryButton
                   disabled={callBusy || Boolean(activeCall && activeCall.conversationId === conversationId)}
                   onClick={() => {
@@ -551,6 +523,43 @@ export function ChatsPage() {
                 </PrimaryButton>
               </div>
             </header>
+            {incomingPending && (
+              <div className="chats__requestBanner" role="region" aria-label="Запрос на переписку">
+                <p className="chats__requestText">
+                  <strong>{titleOf(active)}</strong> хочет написать вам. Примите запрос, чтобы отвечать без ограничений.
+                </p>
+                <div className="chats__requestActions">
+                  <DangerButton
+                    type="button"
+                    className="chats__requestBtn"
+                    onClick={() =>
+                      void blockRequest(cid(active))
+                        .then(() => {
+                          setIncomingPending(false)
+                          setToast('Заблокировано')
+                        })
+                        .catch((e) => setError(String(e)))
+                    }
+                  >
+                    Заблокировать
+                  </DangerButton>
+                  <PrimaryButton
+                    type="button"
+                    className="chats__requestBtn chats__requestBtn--accept"
+                    onClick={() =>
+                      void acceptRequest(cid(active))
+                        .then(() => {
+                          setIncomingPending(false)
+                          setToast('Запрос принят')
+                        })
+                        .catch((e) => setError(String(e)))
+                    }
+                  >
+                    Принять
+                  </PrimaryButton>
+                </div>
+              </div>
+            )}
             {showGroupEdit && activeIsGroup && conversationId && (
               <div className="chats__groupEdit">
                 <form
