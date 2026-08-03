@@ -150,13 +150,19 @@ export function ChatsPage() {
       void reloadList().catch(() => undefined)
     }
     window.addEventListener('focus', refresh)
+    window.addEventListener('pageshow', refresh)
     const onVis = () => {
       if (document.visibilityState === 'visible') refresh()
     }
     document.addEventListener('visibilitychange', onVis)
+    const poll = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refresh()
+    }, 15000)
     return () => {
       window.removeEventListener('focus', refresh)
+      window.removeEventListener('pageshow', refresh)
       document.removeEventListener('visibilitychange', onVis)
+      window.clearInterval(poll)
     }
   }, [])
 
@@ -386,6 +392,9 @@ export function ChatsPage() {
           </GhostButton>
         </div>
         <div className="chats__list">
+          {list.length === 0 && (
+            <div className="chats__listEmpty">Пока нет чатов. Найдите человека по нику выше.</div>
+          )}
           {list.map((c) => (
             <button
               key={cid(c)}

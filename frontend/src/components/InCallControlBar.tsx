@@ -1,10 +1,11 @@
-import { DisconnectButton, StartAudio, TrackToggle } from '@livekit/components-react'
+import { StartAudio, TrackToggle, useRoomContext } from '@livekit/components-react'
 import { Track } from 'livekit-client'
 import './inCallControlBar.css'
 
 type Props = {
   onCopyLink?: () => void
   copied?: boolean
+  onLeave: () => void
 }
 
 function IconClip() {
@@ -21,7 +22,9 @@ function IconClip() {
   )
 }
 
-export function InCallControlBar({ onCopyLink, copied }: Props) {
+export function InCallControlBar({ onCopyLink, copied, onLeave }: Props) {
+  const room = useRoomContext()
+
   return (
     <div className="callBar" role="toolbar" aria-label="Управление звонком">
       <StartAudio className="callBar__btn callBar__btn--ghost" label="Разрешить звук" />
@@ -43,7 +46,21 @@ export function InCallControlBar({ onCopyLink, copied }: Props) {
 
       <TrackToggle source={Track.Source.ScreenShare} className="callBar__btn" aria-label="Демонстрация экрана" />
 
-      <DisconnectButton className="callBar__btn callBar__btn--leave">Выйти</DisconnectButton>
+      <button
+        type="button"
+        className="callBar__btn callBar__btn--leave"
+        aria-label="Завершить звонок"
+        onClick={() => {
+          onLeave()
+          try {
+            void room.disconnect()
+          } catch {
+            /* already leaving */
+          }
+        }}
+      >
+        Выйти
+      </button>
     </div>
   )
 }

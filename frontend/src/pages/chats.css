@@ -32,6 +32,14 @@
   padding: 0 4px;
 }
 
+.chats__listEmpty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--voco-text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .chats__item,
 .chats__hit {
   text-align: left;

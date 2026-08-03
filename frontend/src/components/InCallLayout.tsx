@@ -22,6 +22,7 @@ type Props = {
   onToggleChat: () => void
   onCloseChat: () => void
   roomId: string
+  onLeave: () => void
 }
 
 function IconChatHandle() {
@@ -37,7 +38,7 @@ function IconChatHandle() {
   )
 }
 
-export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId }: Props) {
+export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId, onLeave }: Props) {
   const layoutContext = useCreateLayoutContext()
 
   const tracks = useTracks(
@@ -122,7 +123,7 @@ export function InCallLayout({ chatOpen, onToggleChat, onCloseChat, roomId }: Pr
       <div className={`copyLinkToast copyLinkToast--bar ${copied ? 'is-show' : ''}`} role="status" aria-live="polite">
         Ссылка скопирована
       </div>
-      <InCallControlBar onCopyLink={copyLink} copied={copied} />
+      <InCallControlBar onCopyLink={copyLink} copied={copied} onLeave={onLeave} />
     </div>
   )
 }

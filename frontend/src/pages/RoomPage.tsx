@@ -42,6 +42,8 @@ export function RoomPage() {
   const lastPresetNameRef = useRef<string | null>(null)
   const autoJoinedRef = useRef(false)
   const callActiveRef = useRef(awaitingPeer)
+  const intentionalLeaveRef = useRef(false)
+  const ringingRef = useRef(awaitingPeer)
 
   const canJoin = useMemo(() => id.length > 0 && name.trim().length > 0, [id, name])
 
@@ -112,7 +114,8 @@ export function RoomPage() {
   useEffect(() => {
     if (!awaitingPeer || !id) return
     const onPageHide = () => {
-      if (!callActiveRef.current) return
+      if (!ringingRef.current || intentionalLeaveRef.current) return
+      ringingRef.current = false
       callActiveRef.current = false
       const token = getAccessToken()
       if (!token) return
@@ -125,6 +128,26 @@ export function RoomPage() {
     window.addEventListener('pagehide', onPageHide)
     return () => window.removeEventListener('pagehide', onPageHide)
   }, [awaitingPeer, id])
+
+  function endCallLocally(message: string, cancel: boolean) {
+    intentionalLeaveRef.current = true
+    ringingRef.current = false
+    callActiveRef.current = false
+    stopPreview()
+    setCameraOn(false)
+    setMicOn(false)
+    setAwaitBanner(false)
+    if (cancel) {
+      void cancelCall(id).catch(() => undefined)
+    }
+    setJoinState({ phase: 'ended', message })
+    nav('/chats')
+  }
+
+  function onLeaveCall() {
+    // Red hangup: always leave. Cancel remote ring only while still waiting.
+    endCallLocally('Звонок завершён', ringingRef.current || awaitBanner)
+  }
 
   async function onJoin() {
     if (!canJoin) return
@@ -141,7 +164,7 @@ export function RoomPage() {
   }
 
   useEffect(() => {
-    if (!autoJoin || autoJoinedRef.current) return
+    if (!autoJoin || autoJoinedRef.current || intentionalLeaveRef.current) return
     if (!canJoin || showAuthGate) return
     if (joinState.phase !== 'prejoin') return
     autoJoinedRef.current = true
@@ -162,10 +185,12 @@ export function RoomPage() {
         const msg = JSON.parse(String(ev.data)) as { event?: string; payload?: { roomId?: string } }
         if (!msg.event || msg.payload?.roomId !== id) return
         if (msg.event === 'call.accepted') {
+          ringingRef.current = false
           callActiveRef.current = false
           setAwaitBanner(false)
         }
         if (msg.event === 'call.declined' || msg.event === 'call.missed' || msg.event === 'call.cancelled') {
+          ringingRef.current = false
           callActiveRef.current = false
           stopPreview()
           setJoinState({
@@ -238,8 +263,7 @@ export function RoomPage() {
         <StatusMessage type="error">{joinState.message}</StatusMessage>
         <NavButton
           onClick={() => {
-            callActiveRef.current = false
-            nav('/chats')
+            endCallLocally('Звонок завершён', false)
           }}
         >
           К чатам
@@ -279,21 +303,18 @@ export function RoomPage() {
             stopPreview()
             setCameraOn(false)
             setMicOn(false)
-            // While waiting for callee, LiveKit may disconnect during join — do not
-            // cancel the ringing call (that was killing incoming overlays).
-            if (callActiveRef.current && awaitingPeer) {
-              autoJoinedRef.current = false
+            // User already handled leave via red button / back.
+            if (intentionalLeaveRef.current) {
+              return
+            }
+            // Transient LiveKit drop while still ringing — stay on prejoin,
+            // but do NOT clear autoJoinedRef (that re-joins and traps the user).
+            if (ringingRef.current) {
               setJoinState({ phase: 'prejoin' })
               return
             }
-            if (callActiveRef.current) {
-              void cancelCall(id).catch(() => undefined)
-              callActiveRef.current = false
-              setJoinState({ phase: 'ended', message: 'Звонок завершён' })
-              nav('/chats')
-              return
-            }
-            setJoinState({ phase: 'prejoin' })
+            setJoinState({ phase: 'ended', message: 'Звонок завершён' })
+            nav('/chats')
           }}
           data-lk-theme="default"
           style={{ height: '100vh' }}
@@ -303,6 +324,7 @@ export function RoomPage() {
             onToggleChat={() => setChatOpen((v) => !v)}
             onCloseChat={() => setChatOpen(false)}
             roomId={id}
+            onLeave={onLeaveCall}
           />
           <RoomAudioRenderer />
         </LiveKitRoom>
@@ -330,11 +352,7 @@ export function RoomPage() {
       <NavButton
         type="button"
         onClick={() => {
-          if (callActiveRef.current) {
-            void cancelCall(id).catch(() => undefined)
-            callActiveRef.current = false
-          }
-          nav('/chats')
+          endCallLocally('Звонок завершён', ringingRef.current || callActiveRef.current)
         }}
         style={{ position: 'absolute', top: 28, left: 32 }}
       >
