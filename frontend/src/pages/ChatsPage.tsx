@@ -296,7 +296,7 @@ export function ChatsPage() {
   }
 
   return (
-    <div className="chats">
+    <div className={`chats${conversationId ? ' chats--threadOpen' : ''}`}>
       <aside className="chats__sidebar">
         <GlassInput value={q} onChange={(e) => void onSearch(e.target.value)} placeholder="Поиск по нику" />
         {found.length > 0 && (
@@ -421,12 +421,20 @@ export function ChatsPage() {
           <>
             <header className="chats__head">
               <div className="chats__headTitle">
+                <button
+                  type="button"
+                  className="chats__back"
+                  aria-label="К списку чатов"
+                  onClick={() => nav('/chats')}
+                >
+                  ←
+                </button>
                 {active.avatarUrl ? (
                   <img className="chats__headAvatar" src={mediaURL(active.avatarUrl)} alt="" />
                 ) : (
                   <span className="chats__headAvatar chats__headAvatar--empty">{initials(titleOf(active))}</span>
                 )}
-                <div>
+                <div className="chats__headText">
                   <h2>{titleOf(active)}</h2>
                   {typingLabel && <div className="chats__typing">{typingLabel}</div>}
                 </div>
