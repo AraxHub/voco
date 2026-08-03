@@ -12,6 +12,38 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+const (
+	RoomTable = "rooms"
+
+	RoomColID              = "id"
+	RoomColTitle           = "title"
+	RoomColOwnerID         = "owner_id"
+	RoomColStatus          = "status"
+	RoomColJoinPolicy      = "join_policy"
+	RoomColMaxParticipants = "max_participants"
+	RoomColCreatedAt       = "created_at"
+	RoomColExpiresAt       = "expires_at"
+	RoomColClosedAt        = "closed_at"
+)
+
+func RoomColumns() []string {
+	return []string{
+		RoomColID,
+		RoomColTitle,
+		RoomColOwnerID,
+		RoomColStatus,
+		RoomColJoinPolicy,
+		RoomColMaxParticipants,
+		RoomColCreatedAt,
+		RoomColExpiresAt,
+		RoomColClosedAt,
+	}
+}
+
+func RoomSelect(alias string) string {
+	return selectList(alias, RoomColumns())
+}
+
 type RoomRepo struct {
 	db *pgadapter.Client
 }
@@ -26,10 +58,10 @@ func (r *RoomRepo) Get(ctx context.Context, id domain.RoomID) (domain.Room, bool
 	var owner *uuid.UUID
 	var expires, closed *time.Time
 	var status, policy string
-	err := r.db.QueryRow(ctx, `
-		SELECT id, title, owner_id, status, join_policy, max_participants, created_at, expires_at, closed_at
-		FROM rooms WHERE id = $1
-	`, id.UUID()).Scan(
+	err := r.db.QueryRow(ctx,
+		"SELECT "+RoomSelect("")+" FROM "+RoomTable+" WHERE "+RoomColID+" = $1",
+		id.UUID(),
+	).Scan(
 		&rid, &room.Title, &owner, &status, &policy, &room.MaxParticipants,
 		&room.CreatedAt, &expires, &closed,
 	)
@@ -67,23 +99,23 @@ func (r *RoomRepo) Upsert(ctx context.Context, room domain.Room, _ time.Duration
 	if !room.ClosedAt.IsZero() {
 		closed = room.ClosedAt
 	}
-	_, err := r.db.Exec(ctx, `
-		INSERT INTO rooms (id, title, owner_id, status, join_policy, max_participants, created_at, expires_at, closed_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-		ON CONFLICT (id) DO UPDATE SET
-			title = EXCLUDED.title,
-			owner_id = EXCLUDED.owner_id,
-			status = EXCLUDED.status,
-			join_policy = EXCLUDED.join_policy,
-			max_participants = EXCLUDED.max_participants,
-			expires_at = EXCLUDED.expires_at,
-			closed_at = EXCLUDED.closed_at
-	`, room.ID.UUID(), room.Title, owner, string(room.Status), string(room.JoinPolicy),
+	cols := RoomColumns()
+	_, err := r.db.Exec(ctx,
+		"INSERT INTO "+RoomTable+" ("+RoomSelect("")+") VALUES ("+placeholders(len(cols))+")"+
+			" ON CONFLICT ("+RoomColID+") DO UPDATE SET "+
+			RoomColTitle+" = EXCLUDED."+RoomColTitle+", "+
+			RoomColOwnerID+" = EXCLUDED."+RoomColOwnerID+", "+
+			RoomColStatus+" = EXCLUDED."+RoomColStatus+", "+
+			RoomColJoinPolicy+" = EXCLUDED."+RoomColJoinPolicy+", "+
+			RoomColMaxParticipants+" = EXCLUDED."+RoomColMaxParticipants+", "+
+			RoomColExpiresAt+" = EXCLUDED."+RoomColExpiresAt+", "+
+			RoomColClosedAt+" = EXCLUDED."+RoomColClosedAt,
+		room.ID.UUID(), room.Title, owner, string(room.Status), string(room.JoinPolicy),
 		room.MaxParticipants, room.CreatedAt, expires, closed)
 	return err
 }
 
 func (r *RoomRepo) Delete(ctx context.Context, id domain.RoomID) error {
-	_, err := r.db.Exec(ctx, `DELETE FROM rooms WHERE id = $1`, id.UUID())
+	_, err := r.db.Exec(ctx, "DELETE FROM "+RoomTable+" WHERE "+RoomColID+" = $1", id.UUID())
 	return err
 }
